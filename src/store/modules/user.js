@@ -36,8 +36,10 @@ const actions = {
   login({ commit }, userInfo) {
     const { username, password } = userInfo
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(response => {
+      login(username.trim(), password).then(response => {
         const { data } = response
+        // 目前未支持token，暂时写死
+        data.token = 'admin-token'
         commit('SET_TOKEN', data.token)
         setToken(data.token)
         resolve()
