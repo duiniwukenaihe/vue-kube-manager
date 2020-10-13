@@ -1,20 +1,16 @@
 <template>
   <div class="dashboard-container">
-    <div class="dashboard-text">name: {{ name }}</div>
-    <div class="dashboard-text">roles: <span v-for="role in roles" :key="role">{{ role }}</span></div>
+    <iframe id="ifr1" src="http://master160:3000/d/F2sumsMMz/pai_clusterview?orgId=1&refresh=30s&kiosk" name="ifr1">
+      <p>您的浏览器不支持iframe内嵌页面</p>
+      <p>Your browser does not support iframes.</p>
+    </iframe>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-
 export default {
   name: 'Dashboard',
   computed: {
-    ...mapGetters([
-      'name',
-      'roles'
-    ])
   }
 }
 </script>
@@ -28,5 +24,11 @@ export default {
     font-size: 30px;
     line-height: 46px;
   }
+}
+
+#ifr1 {
+  width: 100%;
+  height: 820px;
+  border: none;
 }
 </style>
