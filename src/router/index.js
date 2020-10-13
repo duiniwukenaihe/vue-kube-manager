@@ -51,7 +51,7 @@ export const constantRoutes = [
       path: 'dashboard',
       name: 'Dashboard',
       component: () => import('@/views/dashboard/index'),
-      meta: { title: 'Dashboard', icon: 'dashboard' }
+      meta: { title: '仪表盘', icon: 'dashboard' }
     }]
   },
 
@@ -86,6 +86,43 @@ export const constantRoutes = [
         name: 'Form',
         component: () => import('@/views/form/index'),
         meta: { title: 'Form', icon: 'form' }
+      }
+    ]
+  }
+]
+
+/**
+ * asyncRoutes
+ * the routes that need to be dynamically loaded based on user roles
+ */
+export const asyncRoutes = [
+  {
+    path: '/deployment',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'deployment',
+        component: () => import('@/views/deployment/index'),
+        meta: { title: '应用管理', icon: 'form' }
+      }
+    ]
+  },
+
+  {
+    path: '/user',
+    component: Layout,
+    meta: { roles: ['SYS_ADMIN'] },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/user/index'),
+        name: 'user',
+        meta: {
+          roles: ['SYS_ADMIN', 'ORG_ADMIN'],
+          title: '用户管理',
+          icon: 'peoples'
+        }
       }
     ]
   },
@@ -143,7 +180,6 @@ export const constantRoutes = [
       {
         path: 'menu2',
         component: () => import('@/views/nested/menu2/index'),
-        name: 'Menu2',
         meta: { title: 'menu2' }
       }
     ]

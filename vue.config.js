@@ -30,13 +30,35 @@ module.exports = {
   lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
   devServer: {
+    proxy: {
+      '/mockapi': {
+        target: `http://localhost:${port}`,
+        ws: true,
+        changeOrigin: true,
+        pathRewrite: {
+          ['^' + process.env.VUE_APP_BASE_API + '/mockapi']: ''
+        }
+      },
+      '/user/login': {
+        target: process.env.VUE_APP_BACKEND_API,
+        changeOrigin: true,
+        pathRewrite: {
+          '^/user': ''
+        }
+      },
+      '/api': {
+        target: process.env.VUE_APP_BACKEND_API,
+        ws: true,
+        changeOrigin: true
+      }
+    },
     port: port,
     open: true,
     overlay: {
       warnings: false,
       errors: true
     },
-    before: require('./mock/mock-server.js')
+    after: require('./mock/mock-server.js')
   },
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
@@ -77,6 +99,17 @@ module.exports = {
       .loader('svg-sprite-loader')
       .options({
         symbolId: 'icon-[name]'
+      })
+      .end()
+
+    // set preserveWhitespace
+    config.module
+      .rule('vue')
+      .use('vue-loader')
+      .loader('vue-loader')
+      .tap(options => {
+        options.compilerOptions.preserveWhitespace = true
+        return options
       })
       .end()
 
