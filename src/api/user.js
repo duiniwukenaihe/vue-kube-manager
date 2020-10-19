@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function login(username, password) {
   return request({
-    url: '/user/login',
+    url: '/spring/login',
     method: 'post',
     params: {
       username: username,
@@ -13,7 +13,7 @@ export function login(username, password) {
 
 export function getInfo(token) {
   return request({
-    url: '/mockapi/user/info',
+    url: '/api/user/info',
     method: 'get',
     params: { token }
   })
@@ -21,7 +21,7 @@ export function getInfo(token) {
 
 export function logout() {
   return request({
-    url: '/mockapi/user/logout',
+    url: '/spring/logout',
     method: 'post'
   })
 }

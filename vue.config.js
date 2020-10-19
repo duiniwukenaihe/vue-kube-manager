@@ -39,11 +39,11 @@ module.exports = {
           ['^' + process.env.VUE_APP_BASE_API + '/mockapi']: ''
         }
       },
-      '/user/login': {
+      '/spring': {
         target: process.env.VUE_APP_BACKEND_API,
         changeOrigin: true,
         pathRewrite: {
-          '^/user': ''
+          '^/spring': ''
         }
       },
       '/api': {
