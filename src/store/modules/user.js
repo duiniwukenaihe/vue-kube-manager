@@ -38,7 +38,6 @@ const actions = {
     return new Promise((resolve, reject) => {
       login(username.trim(), password).then(response => {
         const { result } = response
-        console.log('result: ' + result)
         commit('SET_TOKEN', result)
         setToken(result)
         resolve()
@@ -52,7 +51,6 @@ const actions = {
   getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
       getInfo(state.token).then(response => {
-        console.log(response)
         const { result } = response
 
         if (!result) {

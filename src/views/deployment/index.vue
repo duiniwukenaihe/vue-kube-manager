@@ -174,9 +174,9 @@ import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
 const statusOptions = [
-  { key: 'Ready', display_name: '正常' },
+  { key: 'Running', display_name: '运行中' },
   { key: 'Starting', display_name: '启动中' },
-  { key: 'Failed', display_name: '异常' }
+  { key: 'Failed', display_name: '失败' }
 ]
 
 // arr to obj, such as { CN : "China", US : "USA" }
@@ -220,7 +220,7 @@ export default {
         True: 'success',
         False: 'danger',
         Starting: 'info',
-        Ready: 'success',
+        Running: 'success',
         Failed: 'danger',
         Unknown: 'info'
       }
@@ -297,7 +297,7 @@ export default {
     getList() {
       this.listLoading = true
       listDeployment(this.listQuery).then(response => {
-        this.list = response.rows
+        this.list = response.result
         this.total = response.total
 
         // Just to simulate the time of the request
@@ -370,7 +370,6 @@ export default {
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.temp.timestamp = new Date(this.temp.timestamp)
-      console.log('handleUpdate, this.temp.cpuRequests=' + this.temp.cpuRequests)
       this.temp.cpuRequests = this.temp.cpuRequests.replace('m', '') / 1000
       this.temp.memRequests = this.temp.memRequests.replace('Mi', '')
       this.dialogStatus = 'update'
