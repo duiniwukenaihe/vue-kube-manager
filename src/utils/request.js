@@ -45,29 +45,32 @@ service.interceptors.response.use(
   response => {
     const res = response.data
 
-    // if the custom code is not 20000, it is judged as an error.
+    // 服务端返回了失败状态标识
     if (res.code !== 20000 && !res.success) {
-      Message({
-        message: res.message || 'Error',
-        type: 'error',
-        duration: 5 * 1000
-      })
-
-      // 50008: Illegal token; 50012: Other clients logged in; 50014: Token expired;
-      if (res.code === 'user.not_login' || res.code === 50008 || res.code === 50012 || res.code === 50014) {
-        // to re-login
-        MessageBox.confirm('登录失效，您可以留在此页面或重新登录', '提示', {
-          confirmButtonText: '重新登录',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          store.dispatch('user/resetToken').then(() => {
-            location.reload()
+      // 用户未登录或token验证失败
+      if ((res.code === 'user.not_login' || res.code.indexOf('user.jwt') === 0)) {
+        // 引导重新登录，避免重复弹窗
+        if (document.querySelector('.el-message-box') == null) {
+          MessageBox.confirm('登录失效，请重新登录', '提示', {
+            confirmButtonText: '重新登录',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            store.dispatch('user/resetToken').then(() => {
+              location.reload()
+            })
           })
+        }
+      } else {
+        Message({
+          message: res.message || 'Error',
+          type: 'error',
+          duration: 5 * 1000
         })
       }
-      return Promise.reject(new Error(res.message || 'Error'))
+      return Promise.reject(res.message || 'Error')
     } else {
+      // 请求成功，返回结果
       return res
     }
   },
