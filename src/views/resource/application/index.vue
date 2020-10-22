@@ -26,8 +26,8 @@
         </el-tag>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="onSubmit">申请</el-button>
-        <el-button type="danger" @click="onCancel">撤销</el-button>
+        <el-button v-if="!apply.id" type="primary" @click="onSubmit">申请</el-button>
+        <el-button v-if="apply.id" type="danger" @click="onCancel">撤销</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -127,7 +127,7 @@ export default {
             Message({
               message: '无效的申请',
               type: 'error',
-              duration: 5 * 1000
+              duration: 2 * 1000
             })
             return false
           }

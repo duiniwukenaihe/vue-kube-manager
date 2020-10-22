@@ -77,6 +77,7 @@ export const asyncRoutes = [
   {
     path: '/user',
     component: Layout,
+    name: 'Resource',
     meta: { roles: ['SYS_ADMIN', 'ORG_ADMIN'] },
     children: [
       {
@@ -93,17 +94,31 @@ export const asyncRoutes = [
   },
 
   {
-    path: '/application',
+    path: '/resource',
     component: Layout,
-    meta: { roles: ['ORG_ADMIN', 'ORG_USER'] },
+    meta: {
+      title: '计算资源',
+      icon: 'cpu'
+    },
+    redirect: '/resource/application',
     children: [
       {
-        path: 'index',
+        path: 'application',
         name: 'Application',
-        component: () => import('@/views/application/index'),
+        component: () => import('@/views/resource/application/index'),
         meta: {
           roles: ['ORG_ADMIN', 'ORG_USER'],
           title: '资源申请',
+          icon: 'form'
+        }
+      },
+      {
+        path: 'approve',
+        name: 'Approve',
+        component: () => import('@/views/resource/approve/index'),
+        meta: {
+          roles: ['SYS_ADMIN', 'ORG_ADMIN'],
+          title: '资源审批',
           icon: 'form'
         }
       }

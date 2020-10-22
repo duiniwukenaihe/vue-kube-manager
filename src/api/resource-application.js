@@ -22,3 +22,22 @@ export function cancelApplication(id) {
     method: 'put'
   })
 }
+
+export function listReceive(query) {
+  return request({
+    url: '/api/resource-application/receive',
+    method: 'get',
+    params: query
+  })
+}
+
+export function handleApplication(id, operate, remark) {
+  return request({
+    url: '/api/resource-application/handle/' + id,
+    method: 'put',
+    data: {
+      operate: operate,
+      remark: remark
+    }
+  })
+}
