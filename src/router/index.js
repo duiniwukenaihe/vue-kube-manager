@@ -53,6 +53,61 @@ export const constantRoutes = [
       component: () => import('@/views/dashboard/index'),
       meta: { title: '仪表盘', icon: 'dashboard' }
     }]
+  }
+]
+
+/**
+ * asyncRoutes
+ * the routes that need to be dynamically loaded based on user roles
+ */
+export const asyncRoutes = [
+  {
+    path: '/deployment',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'deployment',
+        component: () => import('@/views/deployment/index'),
+        meta: { title: '应用管理', icon: 'component' }
+      }
+    ]
+  },
+
+  {
+    path: '/user',
+    component: Layout,
+    meta: { roles: ['SYS_ADMIN', 'ORG_ADMIN'] },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/user/index'),
+        name: 'user',
+        meta: {
+          roles: ['SYS_ADMIN', 'ORG_ADMIN'],
+          title: '用户管理',
+          icon: 'peoples'
+        }
+      }
+    ]
+  },
+
+  {
+    path: '/application',
+    component: Layout,
+    meta: { roles: ['ORG_ADMIN', 'ORG_USER'] },
+    children: [
+      {
+        path: 'index',
+        name: 'Application',
+        component: () => import('@/views/application/index'),
+        meta: {
+          roles: ['ORG_ADMIN', 'ORG_USER'],
+          title: '资源申请',
+          icon: 'form'
+        }
+      }
+    ]
   },
 
   {
@@ -73,56 +128,6 @@ export const constantRoutes = [
         name: 'Tree',
         component: () => import('@/views/tree/index'),
         meta: { title: 'Tree', icon: 'tree' }
-      }
-    ]
-  },
-
-  {
-    path: '/form',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        name: 'Form',
-        component: () => import('@/views/form/index'),
-        meta: { title: 'Form', icon: 'form' }
-      }
-    ]
-  }
-]
-
-/**
- * asyncRoutes
- * the routes that need to be dynamically loaded based on user roles
- */
-export const asyncRoutes = [
-  {
-    path: '/deployment',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        name: 'deployment',
-        component: () => import('@/views/deployment/index'),
-        meta: { title: '应用管理', icon: 'form' }
-      }
-    ]
-  },
-
-  {
-    path: '/user',
-    component: Layout,
-    meta: { roles: ['SYS_ADMIN'] },
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/user/index'),
-        name: 'user',
-        meta: {
-          roles: ['SYS_ADMIN', 'ORG_ADMIN'],
-          title: '用户管理',
-          icon: 'peoples'
-        }
       }
     ]
   },
