@@ -102,11 +102,11 @@
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button v-if="row.status=='stopped'" size="mini" type="success" @click="handleStart(row)">
+          <el-button v-if="row.status=='Released'" size="mini" type="success" @click="handleStart(row)">
             启动
           </el-button>
-          <el-button v-if="row.status!='stopped'" size="mini" type="success" @click="handleStop(row)">
-            停止
+          <el-button v-if="row.status!='Released'" size="mini" type="success" @click="handleStop(row)">
+            释放
           </el-button>
           <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
@@ -168,7 +168,7 @@
 </template>
 
 <script>
-import { listDeployment, createDeployment, deleteDeployment, updateDeployment, fetchPv } from '@/api/deployment'
+import { listDeployment, createDeployment, deleteDeployment, updateDeployment, scaleDeployment, fetchPv } from '@/api/deployment'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
@@ -176,7 +176,8 @@ import Pagination from '@/components/Pagination' // secondary package based on e
 const statusOptions = [
   { key: 'Running', display_name: '运行中' },
   { key: 'Starting', display_name: '启动中' },
-  { key: 'Failed', display_name: '失败' }
+  { key: 'Failed', display_name: '失败' },
+  { key: 'Released', display_name: '已释放' }
 ]
 
 // arr to obj, such as { CN : "China", US : "USA" }
@@ -222,6 +223,7 @@ export default {
         Starting: 'info',
         Running: 'success',
         Failed: 'danger',
+        Released: 'info',
         Unknown: 'info'
       }
       return statusMap[status]
@@ -355,7 +357,9 @@ export default {
         if (valid) {
           const requestBody = this.formatRequest(this.temp)
           createDeployment(requestBody).then(() => {
-            this.unshiftNew(requestBody)
+            // unshiftNew尚未完善，后续完善过再使用
+            // this.unshiftNew(requestBody)
+            this.getList()
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -370,8 +374,6 @@ export default {
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.temp.timestamp = new Date(this.temp.timestamp)
-      this.temp.cpuRequests = this.temp.cpuRequests.replace('m', '') / 1000
-      this.temp.memRequests = this.temp.memRequests.replace('Mi', '')
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -382,7 +384,9 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
-          tempData.memRequests = tempData.memRequests + 'Mi'
+          if (!tempData.memRequests.endsWith('i')) {
+            tempData.memRequests = tempData.memRequests + 'Mi'
+          }
           updateDeployment(tempData).then(() => {
             // const index = this.list.findIndex(v => v.uid === this.temp.uid)
             // this.list.splice(index, 1, this.temp)
@@ -410,19 +414,29 @@ export default {
       })
     },
     handleStart(row) {
-      this.$notify({
-        title: '成功',
-        message: '正在启动应用，请稍候',
-        type: 'success',
-        duration: 2000
+      const tempData = Object.assign({}, row)
+      tempData.replicas = 1
+      scaleDeployment(tempData).then(() => {
+        this.$notify({
+          title: '成功',
+          message: '正在启动应用，请稍候',
+          type: 'success',
+          duration: 2000
+        })
+        row.status = 'Starting'
       })
     },
     handleStop(row) {
-      this.$notify({
-        title: '成功',
-        message: '正在停止应用，请稍候',
-        type: 'success',
-        duration: 2000
+      const tempData = Object.assign({}, row)
+      tempData.replicas = 0
+      scaleDeployment(tempData).then(() => {
+        this.$notify({
+          title: '成功',
+          message: '正在停止应用，请稍候',
+          type: 'success',
+          duration: 2000
+        })
+        row.status = 'Released'
       })
     },
     handleFetchPv(pv) {

@@ -32,6 +32,14 @@ export function deleteDeployment(namespace, name) {
   })
 }
 
+export function scaleDeployment(data) {
+  return request({
+    url: '/api/deployment/scale',
+    method: 'patch',
+    data
+  })
+}
+
 export function fetchPv(pv) {
   return request({
     url: '/mockapi/article/pv',
