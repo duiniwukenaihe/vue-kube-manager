@@ -39,13 +39,6 @@ module.exports = {
           ['^' + process.env.VUE_APP_BASE_API + '/mockapi']: ''
         }
       },
-      '/spring': {
-        target: process.env.VUE_APP_BACKEND_API,
-        changeOrigin: true,
-        pathRewrite: {
-          '^/spring': ''
-        }
-      },
       '/api': {
         target: process.env.VUE_APP_BACKEND_API,
         ws: true,

@@ -26,9 +26,9 @@
       <el-table-column prop="organizationName" label="组织" width="160px" />
       <el-table-column prop="applyUserNickname" label="申请人" width="120px" align="center" />
       <el-table-column prop="cpuLimits" label="CPU" width="80px" align="center" :formatter="cpuLimitsFormatter" />
-      <el-table-column prop="memLimits" label="内存" width="80px" align="center" />
+      <el-table-column prop="memLimits" label="内存" width="80px" align="center" :formatter="memLimitsFormatter" />
       <el-table-column prop="gpuCountLimits" label="GPU" width="80px" align="center" />
-      <el-table-column prop="gpuMemLimits" label="显存" width="80px" align="center" />
+      <el-table-column prop="gpuMemLimits" label="显存" width="80px" align="center" :formatter="gpuMemLimitsFormatter" />
       <el-table-column prop="remark" label="原因" />
       <el-table-column label="状态" width="80" align="center">
         <template slot-scope="{row}">
@@ -172,13 +172,12 @@ export default {
       return (row.cpuLimits / 1000).toFixed(3)
     },
     memLimitsFormatter(row, column) {
-      const requests = row.cpuLimits
-      if (!isNaN(requests)) {
-        return requests
-      } else if (requests.substr(requests.length - 1, 1) === 'i') {
-        return requests.replace('i', '')
-      }
-      return requests
+      const requests = row.memLimits
+      return requests + 'Mi'
+    },
+    gpuMemLimitsFormatter(row, column) {
+      const requests = row.gpuMemLimits
+      return requests + 'G'
     }
   }
 }

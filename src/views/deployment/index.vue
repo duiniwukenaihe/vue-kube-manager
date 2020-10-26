@@ -40,8 +40,8 @@
       <el-table-column label="应用名称" min-width="150px">
         <template slot-scope="{row}">
           <a :href="'//node59/' + row.uid + '/'" target="_blank">{{ row.name }}</a>
-          <el-tag :type="row.resourceType | typeStyleFilter">
-            {{ row.resourceType }}
+          <el-tag v-if="row.resourceType=='GPU'" type="success">
+            GPU
           </el-tag>
         </template>
       </el-table-column>
@@ -227,13 +227,6 @@ export default {
         Unknown: 'info'
       }
       return statusMap[status]
-    },
-    typeStyleFilter(type) {
-      const typeMap = {
-        CPU: 'primary',
-        GPU: 'success'
-      }
-      return typeMap[type]
     }
   },
   data() {
@@ -251,7 +244,6 @@ export default {
         sort: '-creationTimestamp'
       },
       statusOptions,
-      resourceTypeOptions: ['CPU', 'GPU'],
       imageOptions: [
         'centos:latest',
         'ubuntu:18.04',

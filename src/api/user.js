@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function login(username, password) {
   return request({
-    url: '/spring/login',
+    url: '/api/login',
     method: 'post',
     params: {
       username: username,
@@ -21,7 +21,7 @@ export function getInfo(token) {
 
 export function logout() {
   return request({
-    url: '/spring/logout',
+    url: '/api/logout',
     method: 'post'
   })
 }
