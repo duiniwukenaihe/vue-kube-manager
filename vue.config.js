@@ -34,10 +34,7 @@ module.exports = {
       '/mockapi': {
         target: `http://localhost:${port}`,
         ws: true,
-        changeOrigin: true,
-        pathRewrite: {
-          ['^' + process.env.VUE_APP_BASE_API + '/mockapi']: ''
-        }
+        changeOrigin: true
       },
       '/api': {
         target: process.env.VUE_APP_BACKEND_API,

@@ -13,7 +13,7 @@ const data = Mock.mock({
 
 module.exports = [
   {
-    url: '/table/list',
+    url: '/mockapi/table/list',
     type: 'get',
     response: config => {
       const items = data.items

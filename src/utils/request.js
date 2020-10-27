@@ -46,9 +46,10 @@ service.interceptors.response.use(
     const res = response.data
 
     // 服务端返回了失败状态标识
-    if (res.code !== 20000 && !res.success) {
+    if (!res.success && res.code !== 20000) {
+      console.log(res)
       // 用户未登录或token验证失败
-      if ((res.code === 'user.not_login' || res.code.indexOf('user.jwt') === 0)) {
+      if (res.code === 'user.not_login' || (!!res.code && res.code.indexOf('user.jwt') === 0)) {
         // 引导重新登录，避免重复弹窗
         if (document.querySelector('.el-message-box') == null) {
           MessageBox.confirm('登录失效，请重新登录', '提示', {
