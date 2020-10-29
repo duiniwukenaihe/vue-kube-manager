@@ -14,9 +14,6 @@
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新建
       </el-button>
-      <el-checkbox v-model="showDeploymentStatus" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">
-        部署状态
-      </el-checkbox>
     </div>
 
     <el-table
@@ -36,10 +33,41 @@
       </el-table-column>
       <el-table-column label="应用名称" min-width="150px">
         <template slot-scope="{row}">
-          <a :href="'//node59/' + row.uid + '/'" target="_blank">{{ row.name }}</a>
+          <a :href="'//node59/' + row.uid + '/'" target="_blank" class="link-type">{{ row.name }}</a>
           <el-tag v-if="row.resourceType=='GPU'" type="success">
             GPU
           </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="命名空间" width="100px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.namespace }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="CPU" width="80px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.cpuLimits }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="内存" width="80px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.memLimits }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="GPU" width="80px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.gpuCountLimits }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="显存" width="80px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.gpuMemLimits }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="镜像" align="center" width="150">
+        <template slot-scope="{row}">
+          <span v-if="row.image" class="link-type" @click="handleFetchPv(row.image)">{{ row.image }}</span>
+          <span v-else>0</span>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" width="150px" align="center">
@@ -52,45 +80,10 @@
           <span>{{ row.availableReplicas }} / {{ row.replicas }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="CPU" width="80px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.cpuRequests | cpuRequestsFilter }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="内存" width="80px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.memRequests | memRequestsFilter }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="GPU" width="80px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.gpuLimits }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="镜像" align="center" width="150">
-        <template slot-scope="{row}">
-          <span v-if="row.image" class="link-type" @click="handleFetchPv(row.image)">{{ row.image }}</span>
-          <span v-else>0</span>
-        </template>
-      </el-table-column>
       <el-table-column label="状态" width="80" align="center">
         <template slot-scope="{row}">
           <el-tag :type="row.status | statusStyleFilter">
             {{ row.status | statusFilter }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column v-if="showDeploymentStatus" label="可用" class-name="status-col" width="80">
-        <template slot-scope="{row}">
-          <el-tag :type="row.availableStatus | statusStyleFilter">
-            {{ row.availableStatus | deploymentStatusFilter }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column v-if="showDeploymentStatus" label="执行" width="80" align="center">
-        <template slot-scope="{row}">
-          <el-tag :type="row.progressingStatus | statusStyleFilter">
-            {{ row.progressingStatus | deploymentStatusFilter }}
           </el-tag>
         </template>
       </el-table-column>
@@ -115,11 +108,11 @@
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="80px" style="width: 400px; margin-left:50px;">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item label="名称" prop="name">
           <el-input v-model="temp.name" />
         </el-form-item>
-        <el-form-item label="命名空间" prop="namespace">
+        <el-form-item v-permission="['SYS_ADMIN']" label="命名空间" prop="namespace">
           <el-input v-model="temp.namespace" />
         </el-form-item>
         <el-form-item label="镜像" prop="image">
@@ -127,19 +120,20 @@
             <el-option v-for="item in imageOptions" :key="item" :label="item" :value="item" />
           </el-select>
         </el-form-item>
-        <el-form-item label="CPU" prop="cpuRequests">
-          <el-input v-model="temp.cpuRequests" />
+        <el-form-item label="CPU核心数" prop="cpuLimits">
+          <el-input-number v-model="temp.cpuLimits" :min="0" :max="64" :precision="3" :step="0.1" />
         </el-form-item>
-        <el-form-item label="内存 (Mi)" prop="memRequests">
-          <el-input v-model="temp.memRequests" />
+        <el-form-item label="内存 (M)" prop="memLimits">
+          <el-input-number v-model="temp.memLimits" :min="100" :max="64000" :step="100" />
         </el-form-item>
-        <el-form-item label="显卡" prop="gpuLimits">
-          <el-input v-model="temp.gpuLimits" />
+        <el-form-item label="GPU数量" prop="gpuCountLimits">
+          <el-input-number v-model="temp.gpuCountLimits" :min="0" :max="10" />
+        </el-form-item>
+        <el-form-item label="显存（G）" prop="gpuMemLimits">
+          <el-input-number v-model="temp.gpuMemLimits" :min="0" :max="40" />
         </el-form-item>
         <el-form-item label="副本">
-          <el-select v-model="temp.replicas" class="filter-item" placeholder="请选择副本数量">
-            <el-option v-for="item in replicasOptions" :key="item" :label="item" :value="item" />
-          </el-select>
+          <el-input-number v-model="temp.replicas" :min="1" :max="3" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -169,6 +163,8 @@ import { listDeployment, createDeployment, deleteDeployment, updateDeployment, s
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+// 当然你也可以为了方便使用，将它注册到全局
+import permission from '@/directive/permission/index.js' // 权限判断指令
 
 const statusOptions = [
   { key: 'Running', display_name: '运行中' },
@@ -186,22 +182,8 @@ const statusTypeKeyValue = statusOptions.reduce((acc, cur) => {
 export default {
   name: 'ComplexTable',
   components: { Pagination },
-  directives: { waves },
+  directives: { waves, permission },
   filters: {
-    cpuRequestsFilter(requests) {
-      if (requests.substr(requests.length - 1, 1) === 'm') {
-        return requests.replace('m', '') / 1000
-      }
-      return requests
-    },
-    memRequestsFilter(requests) {
-      if (!isNaN(requests)) {
-        return requests
-      } else if (requests.substr(requests.length - 1, 1) === 'i') {
-        return requests.replace('i', '')
-      }
-      return requests
-    },
     statusFilter(status) {
       return statusTypeKeyValue[status]
     },
@@ -255,14 +237,16 @@ export default {
       ],
       replicasOptions: [1, 2, 3],
       sortOptions: [{ label: '时间升序', key: '+creationTimestamp' }, { label: '时间降序', key: '-creationTimestamp' }],
-      showDeploymentStatus: false,
       temp: {
         name: '',
-        namespace: 'ns100006',
+        namespace: 'ns100009',
         image: 'centos:latest',
-        cpuRequests: '0.5',
-        memRequests: '200',
-        gpuLimits: '0',
+        cpuLimits: 0.5,
+        cpuRequests: 0.5,
+        memLimits: 500,
+        memRequests: 500,
+        gpuCountLimits: 0,
+        gpuMemLimits: 0,
         replicas: 1
       },
       dialogFormVisible: false,
@@ -325,11 +309,12 @@ export default {
     resetTemp() {
       this.temp = {
         name: '',
-        namespace: 'ns100006',
+        namespace: 'ns100009',
         image: 'centos:latest',
-        cpuRequests: 0.5,
-        memRequests: 200,
-        gpuLimits: 0,
+        cpuLimits: 0.5,
+        memLimits: 500,
+        gpuCountLimits: 0,
+        gpuMemLimits: 0,
         replicas: 1
       }
     },
@@ -344,7 +329,7 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const requestBody = this.formatRequest(this.temp)
+          const requestBody = this.formatRow(this.temp)
           createDeployment(requestBody).then(() => {
             // unshiftNew尚未完善，后续完善过再使用
             // this.unshiftNew(requestBody)
@@ -361,7 +346,7 @@ export default {
       })
     },
     handleUpdate(row) {
-      this.temp = Object.assign({}, row) // copy obj
+      this.temp = this.formatRow(row) // copy and format obj
       this.temp.timestamp = new Date(this.temp.timestamp)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
@@ -373,9 +358,8 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
-          if (!tempData.memRequests.endsWith('i')) {
-            tempData.memRequests = tempData.memRequests + 'Mi'
-          }
+          tempData.cpuRequests = tempData.cpuLimits
+          tempData.memRequests = tempData.memLimits
           updateDeployment(tempData).then(() => {
             // const index = this.list.findIndex(v => v.uid === this.temp.uid)
             // this.list.splice(index, 1, this.temp)
@@ -443,15 +427,11 @@ export default {
         }
       }))
     },
-    formatRequest(temp) {
-      const body = JSON.parse(JSON.stringify(this.temp))
-      body.cpuRequests = body.cpuRequests ? body.cpuRequests * 1000 + 'm' : '500m'
-      body.memRequests = body.memRequests ? body.memRequests + 'Mi' : '200Mi'
-      body.gpuLimits = body.gpuLimits ? body.gpuLimits : 0
-      body.replicas = body.replicas ? body.replicas : 1
-      body.cpuLimits = body.cpuRequests
-      body.memLimits = body.memRequests
-
+    formatRow(row) {
+      const body = Object.assign({}, row)
+      body.memLimits = parseInt(body.memLimits)
+      body.gpuCountLimits = parseInt(body.gpuCountLimits)
+      body.gpuMemLimits = parseInt(body.gpuMemLimits)
       return body
     },
     unshiftNew(body) {

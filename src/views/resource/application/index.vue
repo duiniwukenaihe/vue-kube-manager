@@ -7,7 +7,7 @@
           {{ apply.cpuLimits | diffDecimalTextFilter(current.cpuLimits) }}
         </el-tag>
       </el-form-item>
-      <el-form-item label="内存（Mi）">
+      <el-form-item label="内存（M）">
         <el-input-number v-model="apply.memLimits" :min="0" :max="64000" />
         <el-tag :type="apply.memLimits | diffStyleFilter(current.memLimits)">
           {{ apply.memLimits | diffTextFilter(current.memLimits) }}
@@ -19,7 +19,7 @@
           {{ apply.gpuCountLimits | diffTextFilter(current.gpuCountLimits) }}
         </el-tag>
       </el-form-item>
-      <el-form-item label="显存（Gi）">
+      <el-form-item label="显存（G）">
         <el-input-number v-model="apply.gpuMemLimits" :min="0" :max="40" />
         <el-tag :type="apply.gpuMemLimits | diffStyleFilter(current.gpuMemLimits)">
           {{ apply.gpuMemLimits | diffTextFilter(current.gpuMemLimits) }}
