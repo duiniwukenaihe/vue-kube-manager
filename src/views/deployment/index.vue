@@ -429,7 +429,9 @@ export default {
     },
     formatRow(row) {
       const body = Object.assign({}, row)
+      body.cpuRequests = body.cpuLimits
       body.memLimits = parseInt(body.memLimits)
+      body.memRequests = body.memLimits
       body.gpuCountLimits = parseInt(body.gpuCountLimits)
       body.gpuMemLimits = parseInt(body.gpuMemLimits)
       return body

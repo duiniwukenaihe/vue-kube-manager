@@ -51,7 +51,7 @@ export const constantRoutes = [
       path: 'dashboard',
       name: 'Dashboard',
       component: () => import('@/views/dashboard/index'),
-      meta: { title: '仪表盘', icon: 'dashboard' }
+      meta: { title: '资源仪表盘', icon: 'dashboard' }
     }]
   }
 ]
@@ -130,7 +130,7 @@ export const asyncRoutes = [
     component: Layout,
     redirect: '/example/table',
     name: 'Example',
-    meta: { title: 'Example', icon: 'el-icon-s-help' },
+    meta: { title: '镜像管理', icon: 'el-icon-s-help' },
     children: [
       {
         path: 'table',
@@ -153,7 +153,7 @@ export const asyncRoutes = [
     redirect: '/nested/menu1',
     name: 'Nested',
     meta: {
-      title: 'Nested',
+      title: '文件管理',
       icon: 'nested'
     },
     children: [
@@ -210,8 +210,8 @@ export const asyncRoutes = [
     component: Layout,
     children: [
       {
-        path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
-        meta: { title: 'External Link', icon: 'link' }
+        path: 'https://master160:30001/',
+        meta: { roles: ['SYS_ADMIN'], title: 'Kubernetes 仪表盘', icon: 'link' }
       }
     ]
   },
