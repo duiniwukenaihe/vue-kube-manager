@@ -238,6 +238,7 @@ export default {
       replicasOptions: [1, 2, 3],
       sortOptions: [{ label: '时间升序', key: '+creationTimestamp' }, { label: '时间降序', key: '-creationTimestamp' }],
       temp: {
+        uid: '',
         name: '',
         namespace: 'ns100009',
         image: 'centos:latest',
@@ -329,11 +330,9 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const requestBody = this.formatRow(this.temp)
+          const requestBody = this.standardizeRow(this.temp)
           createDeployment(requestBody).then(() => {
-            // unshiftNew尚未完善，后续完善过再使用
-            // this.unshiftNew(requestBody)
-            this.getList()
+            this.unshiftNew(this.formatBody(requestBody))
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -346,7 +345,7 @@ export default {
       })
     },
     handleUpdate(row) {
-      this.temp = this.formatRow(row) // copy and format obj
+      this.temp = this.standardizeRow(row) // copy and format obj
       this.temp.timestamp = new Date(this.temp.timestamp)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
@@ -361,9 +360,8 @@ export default {
           tempData.cpuRequests = tempData.cpuLimits
           tempData.memRequests = tempData.memLimits
           updateDeployment(tempData).then(() => {
-            // const index = this.list.findIndex(v => v.uid === this.temp.uid)
-            // this.list.splice(index, 1, this.temp)
-            this.getList()
+            const index = this.list.findIndex(v => v.uid === this.temp.uid)
+            this.list.splice(index, 1, this.formatBody(this.temp))
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -427,21 +425,33 @@ export default {
         }
       }))
     },
-    formatRow(row) {
+    standardizeRow(row) {
+      console.log('uid: ' + row.uid)
       const body = Object.assign({}, row)
       body.cpuRequests = body.cpuLimits
       body.memLimits = parseInt(body.memLimits)
       body.memRequests = body.memLimits
-      body.gpuCountLimits = parseInt(body.gpuCountLimits)
-      body.gpuMemLimits = parseInt(body.gpuMemLimits)
+      body.gpuCountLimits = body.gpuCountLimits === '-' ? 0 : body.gpuCountLimits
+      body.gpuMemLimits = body.gpuMemLimits === '-' ? 0 : parseInt(body.gpuMemLimits)
+      console.log(body)
       return body
+    },
+    formatBody(body) {
+      const row = Object.assign({}, body)
+      row.status = 'Starting'
+      row.memLimits = row.memLimits + 'M'
+      row.gpuCountLimits = row.gpuCountLimits > 0 ? row.gpuCountLimits : '-'
+      row.gpuMemLimits = row.gpuMemLimits > 0 ? row.gpuMemLimits + 'G' : '-'
+      return row
     },
     unshiftNew(body) {
       body.availableReplicas = 0
       body.status = 'Starting'
-      body.availableStatus = 'False'
-      body.progressingStatus = 'False'
-      body.resourceType = body.gpuLimits > 0 ? 'GPU' : 'CPU'
+      if (body.gpuCountLimits > 0 || body.gpuMemLimits > 0) {
+        body.resourceType = 'GPU'
+      } else {
+        body.resourceType = 'CPU'
+      }
       this.list.unshift(body)
     }
   }
