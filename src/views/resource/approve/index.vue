@@ -173,7 +173,7 @@ export default {
     },
     memLimitsFormatter(row, column) {
       const requests = row.memLimits
-      return requests + 'Mi'
+      return requests + 'M'
     },
     gpuMemLimitsFormatter(row, column) {
       const requests = row.gpuMemLimits

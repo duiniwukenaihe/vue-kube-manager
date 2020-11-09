@@ -25,3 +25,25 @@ export function logout() {
     method: 'post'
   })
 }
+
+export function listUser(query) {
+  return request({
+    url: '/api/user',
+    method: 'get',
+    params: query
+  })
+}
+
+export function enableUser(id) {
+  return request({
+    url: '/api/user/enable/' + id,
+    method: 'put'
+  })
+}
+
+export function disableUser(id) {
+  return request({
+    url: '/api/user/diable/' + id,
+    method: 'put'
+  })
+}

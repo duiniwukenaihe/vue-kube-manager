@@ -39,7 +39,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="命名空间" width="100px" align="center">
+      <el-table-column v-permission="['SYS_ADMIN']" label="命名空间" width="100px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.namespace }}</span>
         </template>
@@ -224,16 +224,12 @@ export default {
       },
       statusOptions,
       imageOptions: [
-        'centos:latest',
-        'ubuntu:18.04',
-        'nginx:alpine',
-        'httpd',
-        'tomcat',
-        'dorowu/ubuntu-desktop-lxde-vnc',
-        'tsl0922/ttyd',
-        'tydd2',
-        'jupyter/tensorflow-notebook',
-        'tensorflow/tensorflow:2.0.3-gpu-jupyter'
+        'tensorflow:2.0.3-gpu-jupyter',
+        'jupyter-notebook:r-4.0.3',
+        'terminal:1.6.1',
+        'httpd:2.4.46',
+        'ubuntu-desktop-lxde:focal',
+        'centos:7'
       ],
       replicasOptions: [1, 2, 3],
       sortOptions: [{ label: '时间升序', key: '+creationTimestamp' }, { label: '时间降序', key: '-creationTimestamp' }],
@@ -241,7 +237,7 @@ export default {
         uid: '',
         name: '',
         namespace: 'ns100009',
-        image: 'centos:latest',
+        image: 'terminal:1.6.1',
         cpuLimits: 0.5,
         cpuRequests: 0.5,
         memLimits: 500,
@@ -286,13 +282,6 @@ export default {
       this.listQuery.page = 1
       this.getList()
     },
-    handleModifyStatus(row, status) {
-      this.$message({
-        message: '操作Success',
-        type: 'success'
-      })
-      row.status = status
-    },
     sortChange(data) {
       const { prop, order } = data
       if (prop === 'id') {
@@ -311,7 +300,7 @@ export default {
       this.temp = {
         name: '',
         namespace: 'ns100009',
-        image: 'centos:latest',
+        image: 'terminal:1.6.1',
         cpuLimits: 0.5,
         memLimits: 500,
         gpuCountLimits: 0,
