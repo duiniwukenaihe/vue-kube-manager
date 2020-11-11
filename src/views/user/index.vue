@@ -23,7 +23,7 @@
       style="width: 100%;"
       @sort-change="sortChange"
     >
-      <el-table-column v-permission="['SYS_ADMIN']" prop="organizationName" label="组织" width="160px" />
+      <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="organizationName" label="组织" width="160px" />
       <el-table-column prop="name" label="名字" width="120px" align="center" />
       <el-table-column prop="cpuLimits" label="CPU" width="80px" align="center" :formatter="cpuLimitsFormatter" />
       <el-table-column prop="memLimits" label="内存" width="80px" align="center" :formatter="memLimitsFormatter" />
@@ -59,6 +59,7 @@ import waves from '@/directive/waves' // waves directive
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import { listUser, enableUser, disableUser } from '@/api/user'
 import permission from '@/directive/permission/index.js'
+import { checkPermission } from '@/utils/auth.js'
 
 const statusOptions = [
   { key: 'true', display_name: '有效' },
@@ -117,6 +118,7 @@ export default {
     this.getList()
   },
   methods: {
+    checkPermission,
     getList() {
       this.listLoading = true
       listUser(this.listQuery).then(response => {
