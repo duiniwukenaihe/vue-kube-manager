@@ -39,32 +39,32 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column v-permission="['SYS_ADMIN']" label="命名空间" width="100px" align="center">
+      <el-table-column v-permission="checkPermission(['SYS_ADMIN'])" label="命名空间" min-width="100px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.namespace }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="CPU" width="80px" align="center">
+      <el-table-column label="CPU" min-width="80px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.cpuLimits }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="内存" width="80px" align="center">
+      <el-table-column label="内存" min-width="80px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.memLimits }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="GPU" width="80px" align="center">
+      <el-table-column label="GPU" min-width="80px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.gpuCountLimits }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="显存" width="80px" align="center">
+      <el-table-column label="显存" min-width="80px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.gpuMemLimits }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="镜像" align="center" width="150">
+      <el-table-column label="镜像" min-width="220px" align="center">
         <template slot-scope="{row}">
           <span v-if="row.image" class="link-type" @click="handleFetchPv(row.image)">{{ row.image }}</span>
           <span v-else>0</span>
@@ -165,6 +165,7 @@ import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 // 当然你也可以为了方便使用，将它注册到全局
 import permission from '@/directive/permission/index.js' // 权限判断指令
+import { checkPermission } from '@/utils/auth.js'
 
 const statusOptions = [
   { key: 'Running', display_name: '运行中' },
@@ -266,6 +267,7 @@ export default {
     this.getList()
   },
   methods: {
+    checkPermission,
     getList() {
       this.listLoading = true
       listDeployment(this.listQuery).then(response => {

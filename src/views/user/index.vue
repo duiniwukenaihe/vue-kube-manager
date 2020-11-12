@@ -24,11 +24,21 @@
       @sort-change="sortChange"
     >
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="organizationName" label="组织" width="160px" />
-      <el-table-column prop="name" label="名字" width="120px" align="center" />
-      <el-table-column prop="cpuLimits" label="CPU" width="80px" align="center" :formatter="cpuLimitsFormatter" />
-      <el-table-column prop="memLimits" label="内存" width="80px" align="center" :formatter="memLimitsFormatter" />
-      <el-table-column prop="gpuCountLimits" label="GPU" width="80px" align="center" />
-      <el-table-column prop="gpuMemLimits" label="显存" width="80px" align="center" :formatter="gpuMemLimitsFormatter" />
+      <el-table-column prop="name" label="名字" min-width="180px" />
+      <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuLimitsFormatter" />
+      <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memLimitsFormatter" />
+      <el-table-column prop="gpuCountLimits" label="GPU" min-width="80px" align="center" />
+      <el-table-column prop="gpuMemLimits" label="显存" min-width="80px" align="center" :formatter="gpuMemLimitsFormatter" />
+      <el-table-column label="创建时间" min-width="150px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.createTime }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="上次登录" min-width="150px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.lastLoginTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="80" align="center">
         <template slot-scope="{row}">
           <el-tag :type="row.enabled | statusStyleFilter">
