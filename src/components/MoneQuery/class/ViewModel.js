@@ -1,4 +1,4 @@
-import { getCurrencyData } from '@/api/currency-query'
+import request from '@/utils/request'
 
 var __awaiter =
   (this && this.__awaiter) ||
@@ -97,12 +97,13 @@ export class ListView extends ViewModel {
       try {
         const args = Array.from(arguments)
         this.loading = true
-        yield getCurrencyData(args.shift()).then(response => {
-          const res = response
-          this.rows = getDeepProp(res, this.rowsName.split('.'))
-          this.total = getDeepProp(res, this.totalName.split('.'))
-          return Promise.resolve(res)
+        const res = yield request({
+          url: args.shift(),
+          method: 'get'
         })
+        this.rows = getDeepProp(res, this.rowsName.split('.'))
+        this.total = getDeepProp(res, this.totalName.split('.'))
+        return Promise.resolve(res)
       } catch (error) {
         this.rows = []
         this.total = 0

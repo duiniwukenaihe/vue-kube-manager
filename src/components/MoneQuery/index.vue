@@ -130,7 +130,7 @@ import Col from '@/components/MoneQuery/class/Col'
 import { ListView, Param, getDeepProp } from '@/components/MoneQuery/class/ViewModel'
 import FieldGroup from '@/components/MoneQuery/class/FieldGroup'
 import showField from './show-field'
-import { getCurrencyConfig } from '@/api/currency-query'
+import request from '@/utils/request'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
 export default {
@@ -142,13 +142,10 @@ export default {
   props: {
     config: { type: [Object, String], required: true },
     data: { type: [Array, String], required: true },
-    height: { type: [String, Number], default: '150px' },
-    maxHeight: { type: [String, Number], default: '1500px' },
     border: { type: Boolean, default: true },
     primaryKey: { type: String, default: 'id' },
-    pageLayout: { type: String, default: null },
-    pageName: { type: String, default: 'pageIndex' },
-    sizeName: { type: String, default: 'pageSize' },
+    pageName: { type: String, default: 'page' },
+    sizeName: { type: String, default: 'limit' },
     rowsName: { type: String, default: 'result' },
     totalName: { type: String, default: 'total' },
     colbox: { type: Object, default: null },
@@ -158,7 +155,7 @@ export default {
     showReset: { type: Boolean, default: false },
     showDelete: { type: Boolean, default: false },
     showHeader: { type: Boolean, default: true },
-    showSelection: { type: Boolean, default: true },
+    showSelection: { type: Boolean, default: false },
     showIndex: { type: Boolean, default: false },
     formatters: {
       type: Object,
@@ -220,7 +217,12 @@ export default {
       try {
         this.CONFIGLoading = true
         if (typeof this.config === 'string') {
-          const response = await getCurrencyConfig(this.config)
+          console.log('request...')
+          const response = await request({
+            url: this.config,
+            method: 'get'
+          })
+          console.log(response)
           this.CONFIG = response.result
           this.$emit('config-success', response.result)
         } else {
@@ -251,7 +253,6 @@ export default {
     initConfig() {
       console.log('initConfig...')
       if (this.primaryKey) this.CONFIG.primaryKey = this.primaryKey
-      if (this.pageLayout) this.CONFIG.pageLayout = this.pageLayout
       if (this.pageName) this.CONFIG.pageName = this.pageName
       if (this.sizeName) this.CONFIG.sizeName = this.sizeName
       if (this.rowsName) this.CONFIG.rowsName = this.rowsName
@@ -441,11 +442,11 @@ export default {
           value: queryString
         }
       ]
-      getCurrencyConfig(this.config).then(response => {
-        console.log(response.result)
-        const res = response
-        cb(getDeepProp(res, this.stmt.rowsName.split('.')))
+      const res = await request({
+        url: this.data,
+        method: 'get'
       })
+      cb(getDeepProp(res, this.stmt.rowsName.split('.')))
     },
     handleSortChange({ prop, order }) {
       if (this.CONFIG.showHeader && this.CONFIG.showSelection) {
