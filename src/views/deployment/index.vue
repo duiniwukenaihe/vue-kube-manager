@@ -39,7 +39,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column v-permission="checkPermission(['SYS_ADMIN'])" label="命名空间" min-width="100px" align="center">
+      <el-table-column v-if="checkPermission(['SYS_ADMIN'])" label="命名空间" min-width="100px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.namespace }}</span>
         </template>
@@ -64,7 +64,7 @@
           <span>{{ row.gpuMemLimits }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="镜像" min-width="220px" align="center">
+      <el-table-column label="镜像" min-width="220px">
         <template slot-scope="{row}">
           <span v-if="row.image" class="link-type" @click="handleFetchPv(row.image)">{{ row.image }}</span>
           <span v-else>0</span>

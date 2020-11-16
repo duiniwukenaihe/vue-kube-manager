@@ -53,6 +53,17 @@ export const constantRoutes = [
       component: () => import('@/views/dashboard/index'),
       meta: { title: '资源仪表盘', icon: 'dashboard' }
     }]
+  },
+
+  {
+    path: '/currency',
+    component: Layout,
+    children: [{
+      path: 'index',
+      name: 'Currency',
+      component: () => import('@/views/currency/index'),
+      meta: { title: '通用查询', icon: 'table' }
+    }]
   }
 ]
 
