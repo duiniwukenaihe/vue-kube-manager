@@ -1,45 +1,55 @@
 <template>
   <div v-loading="CONFIGLoading" class="mone-query">
-    <div v-if="CONFIG" class="mone-query-body">
+    <div v-if="CONFIG" class="filter-container">
       <slot name="header">
-        <el-row class="tool-box">
-          <el-col :span="8">
-            <el-button class="p-2" size="large" type="text" icon="el-icon-refresh" :loading="CONFIGLoading" @click="loadConfig()" />
-            <slot name="header-left" />
-          </el-col>
-          <el-col :span="16" class="text-right">
-            <el-button type="default" @click="resetParam()">重置</el-button>
-            <el-button type="primary" icon="el-icon-search" :loading="stmt.loading" @click="stmtLoad()">
-              查询
-            </el-button>
-            <el-button v-if="CONFIG.showDelete" type="danger" icon="el-icon-delete" @click="handleBatchDelete()">
-              删除
-            </el-button>
-            <!--
-            <el-button type="primary" :loading="stmt.exporting" @click="handleExport()">
-              导出
-            </el-button>
-            -->
-            <show-field
-              v-if="CONFIG.colbox"
-              ref="showFieldRef"
-              v-model="showProps"
-              :fields="CONFIG.cols"
-              :placement="CONFIG.colbox.placement"
-              :width="CONFIG.colbox.width"
-              :trigger="CONFIG.colbox.trigger"
-              :config="configShowFields"
-            />
-          </el-col>
-        </el-row>
+        <component
+          :is="COMPONENT_NAME_MAP[item.type]"
+          v-for="item in cols"
+          :key="item.prop"
+          v-model="PARAMS[item.prop].value"
+          class="filter-item"
+          clearable
+          :fetch-suggestions="
+            (queryString, cb) => {
+              querySearchAsync(queryString, cb, item);
+            }
+          "
+          :value-key="item.prop"
+          :options="item.options"
+          :multiple="item.multiple || true"
+          :trigger-on-focus="false"
+          :placeholder="item.placeholder ? item.placeholder : item.label"
+          :value-format="item.valueFormat"
+          :type="item.elType"
+          @click.native.stop=""
+          @select="handleChoose"
+        />
+        <el-button v-if="CONFIG.showReset" class="filter-item" type="default" @click="resetParam()">
+          重置
+        </el-button>
+        <el-button class="filter-item" type="primary" icon="el-icon-search" :loading="stmt.loading" @click="stmtLoad()">
+          查询
+        </el-button>
+        <el-button v-if="CONFIG.showDelete" type="danger" icon="el-icon-delete" @click="handleBatchDelete()">
+          删除
+        </el-button>
+        <show-field
+          v-if="CONFIG.colbox"
+          ref="showFieldRef"
+          v-model="showProps"
+          :fields="CONFIG.cols"
+          :placement="CONFIG.colbox.placement"
+          :width="CONFIG.colbox.width"
+          :trigger="CONFIG.colbox.trigger"
+          :config="configShowFields"
+        />
       </slot>
       <el-table
         :ref="tableId"
         :data="stmt.rows"
         :border="border"
-        row-key="id"
-        :height="height"
-        :max-height="maxHeight"
+        fit
+        :row-key="CONFIG.primaryKey"
         :show-header="CONFIG.showHeader"
         @selection-change="handleSelectionChange"
         @sort-change="handleSortChange"
@@ -61,18 +71,16 @@
         <el-table-column
           v-for="item in cols"
           :key="item.prop"
-          min-width="150px"
+          :min-width="item.minWidth ? item.minWidth : item.width"
           :fixed="FIXED[item.prop]"
           sortable="custom"
           :column-key="item.prop"
           :prop="item.prop"
-          :width="item.width"
           :formatter="formatters[item.prop]"
         >
           <span
             slot="header"
             slot-scope="{}"
-            class="cell-box"
             draggable
             :data-field="item.prop"
             @click.stop=""
@@ -91,45 +99,21 @@
                 @click="FIXED[item.prop] = !FIXED[item.prop]"
               />
             </span>
-            <p class="param-box">
-              <component
-                :is="COMPONENT_NAME_MAP[item.type]"
-                v-model="PARAMS[item.prop].value"
-                class="inline-block"
-                size="mini"
-                clearable
-                :fetch-suggestions="
-                  (queryString, cb) => {
-                    querySearchAsync(queryString, cb, item);
-                  }
-                "
-                :value-key="item.prop"
-                :options="item.options"
-                :multiple="item.multiple || true"
-                :trigger-on-focus="false"
-                :placeholder="item.placeholder"
-                :value-format="item.valueFormat"
-                :type="item.elType"
-                @click.native.stop=""
-                @select="handleChoose"
-              />
-            </p>
           </span>
         </el-table-column>
-        <el-table-column v-if="showAction && showProps && showProps.length" label="操作" fixed="right">
+        <el-table-column v-if="showAction && showProps && showProps.length" label="操作" align="center" width="230" class-name="small-padding fixed-width">
           <template slot-scope="{ row }">
             <slot :row="row" />
           </template>
         </el-table-column>
       </el-table>
 
-      <el-pagination
-        :current-page.sync="stmt.parameters.page[stmt.pageName]"
-        :page-size.sync="stmt.parameters.page[stmt.sizeName]"
-        :layout="CONFIG.pageLayout || 'total, prev, pager, next, sizes, ->, jumper'"
+      <pagination
+        v-show="stmt.total>0"
         :total="stmt.total"
-        @size-change="stmtLoad()"
-        @current-change="stmtLoad()"
+        :page.sync="stmt.parameters.page[stmt.pageName]"
+        :limit.sync="stmt.parameters.page[stmt.sizeName]"
+        @pagination="stmtLoad"
       />
     </div>
     <div v-else class="error-box">
@@ -147,19 +131,20 @@ import { ListView, Param, getDeepProp } from '@/components/MoneQuery/class/ViewM
 import FieldGroup from '@/components/MoneQuery/class/FieldGroup'
 import showField from './show-field'
 import { getCurrencyConfig } from '@/api/currency-query'
-// import { listUser } from '@/api/user'
+import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
 export default {
   name: 'MoneQuery',
   components: {
-    showField
+    showField,
+    Pagination
   },
   props: {
     config: { type: [Object, String], required: true },
     data: { type: [Array, String], required: true },
     height: { type: [String, Number], default: '150px' },
     maxHeight: { type: [String, Number], default: '1500px' },
-    border: { type: Boolean, default: false },
+    border: { type: Boolean, default: true },
     primaryKey: { type: String, default: 'id' },
     pageLayout: { type: String, default: null },
     pageName: { type: String, default: 'pageIndex' },
@@ -170,6 +155,7 @@ export default {
     visibleFields: { type: [Boolean, Array], default: true },
     visibleFieldConfig: { type: Array, default: null },
     showAction: { type: Boolean, default: false },
+    showReset: { type: Boolean, default: false },
     showDelete: { type: Boolean, default: false },
     showHeader: { type: Boolean, default: true },
     showSelection: { type: Boolean, default: true },
@@ -234,11 +220,9 @@ export default {
       try {
         this.CONFIGLoading = true
         if (typeof this.config === 'string') {
-          await getCurrencyConfig(this.config).then(response => {
-            console.log(response.result)
-            this.CONFIG = response.result
-            this.$emit('config-success', response.result)
-          })
+          const response = await getCurrencyConfig(this.config)
+          this.CONFIG = response.result
+          this.$emit('config-success', response.result)
         } else {
           console.log('static config')
           this.CONFIG = this.config
@@ -266,8 +250,6 @@ export default {
     },
     initConfig() {
       console.log('initConfig...')
-      console.log('CONFIG: ', this.CONFIG)
-      console.log('primaryKey: ', this.CONFIG.primaryKey)
       if (this.primaryKey) this.CONFIG.primaryKey = this.primaryKey
       if (this.pageLayout) this.CONFIG.pageLayout = this.pageLayout
       if (this.pageName) this.CONFIG.pageName = this.pageName
@@ -281,6 +263,7 @@ export default {
         this.CONFIG.visibleFieldConfig = this.visibleFieldConfig
       }
       if (this.showAction) this.CONFIG.showAction = this.showAction
+      if (this.showReset) this.CONFIG.showReset = this.showReset
       if (this.showDelete) this.CONFIG.showDelete = this.showDelete
       if (this.showHeader) this.CONFIG.showHeader = this.showHeader
       if (this.showSelection) this.CONFIG.showSelection = this.showSelection
@@ -311,7 +294,7 @@ export default {
       }
     },
     requestUrl() {
-      return '/api/currency/data?code=' + this.data
+      return this.data
     },
     resetParam() {
       console.log('resetParam...')
@@ -424,7 +407,7 @@ export default {
       } else {
         try {
           const res = await primary.load(
-            this.requestUrl(),
+            this.data,
             primary.parameters,
             'GET'
           )
@@ -528,83 +511,4 @@ export default {
 </script>
 
 <style lang='scss'>
-.mone-query {
-  .m-l {
-    margin-left: 12px;
-  }
-  .p-2 {
-    padding: 8px;
-  }
-  .m-r {
-    margin-left: 12px;
-  }
-  .text-right {
-    text-align: right;
-  }
-  box-sizing: border-box;
-  .tool-box {
-    padding: 16px 0;
-    background-color: white;
-  }
-  .error-box {
-    color: #ccc;
-    min-height: 220px;
-    text-align: center;
-    padding-top: 100px;
-  }
-  .bounce-enter-active {
-    animation: bounce-in 0.5s;
-  }
-  .bounce-leave-active {
-    animation: bounce-in 0.5s reverse;
-  }
-  .el-table th {
-    vertical-align: top;
-  }
-  .el-table th div {
-    line-height: normal;
-  }
-  .el-table th > .cell {
-    white-space: nowrap;
-    padding-right: 0;
-    padding-left: 6px;
-    .cell-box {
-      box-sizing: border-box;
-      // padding-left: 4px;
-      border-radius: 2px;
-      cursor: -webkit-grab;
-      display: inline-block;
-      width: calc(100% - 24px);
-      .param-box {
-        padding: 0;
-        font-size: 0;
-      }
-      .el-range-editor,
-      .el-select,
-      .el-select__tags,
-      .el-autocomplete,
-      .el-input {
-        width: 100%;
-        padding: 0;
-      }
-      .el-range-editor.el-input__inner {
-        padding: 3px 10px;
-      }
-    }
-    .caret-wrapper {
-      vertical-align: top;
-    }
-  }
-  @keyframes bounce-in {
-    0% {
-      transform: scale(0);
-    }
-    50% {
-      transform: scale(1.5);
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-}
 </style>

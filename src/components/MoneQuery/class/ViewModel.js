@@ -96,11 +96,8 @@ export class ListView extends ViewModel {
     return __awaiter(this, arguments, void 0, function * () {
       try {
         const args = Array.from(arguments)
-        console.log('load, args:')
-        console.log(args)
         this.loading = true
         yield getCurrencyData(args.shift()).then(response => {
-          console.log(response.result)
           const res = response
           this.rows = getDeepProp(res, this.rowsName.split('.'))
           this.total = getDeepProp(res, this.totalName.split('.'))

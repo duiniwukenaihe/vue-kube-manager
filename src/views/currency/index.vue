@@ -1,5 +1,5 @@
 <template>
-  <div class="app">
+  <div class="app-container">
     <section>
       <mone-query
         ref="moneQuery"
@@ -39,8 +39,8 @@ export default {
   data() {
     return {
       listLoading: true,
-      config: 'LIST_USER',
-      data: 'LIST_USER',
+      config: '/api/currency/config?code=LIST_USER',
+      data: '/api/currency/data?code=LIST_USER',
       formatters: {
       }
     }
