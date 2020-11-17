@@ -24,13 +24,13 @@
           @click.native.stop=""
           @select="handleChoose"
         />
-        <el-button v-if="CONFIG.showReset" class="filter-item" type="default" @click="resetParam()">
+        <el-button v-if="CONFIG.showReset" class="filter-item" type="default" icon="el-icon-refresh" @click="resetParam()">
           重置
         </el-button>
         <el-button class="filter-item" type="primary" icon="el-icon-search" :loading="stmt.loading" @click="stmtLoad()">
           查询
         </el-button>
-        <el-button v-if="CONFIG.showDelete" type="danger" icon="el-icon-delete" @click="handleBatchDelete()">
+        <el-button v-if="CONFIG.showSelection && CONFIG.showDelete" class="filter-item" type="danger" icon="el-icon-delete" @click="handleBatchDelete()">
           删除
         </el-button>
         <show-field
@@ -151,12 +151,12 @@ export default {
     colbox: { type: Object, default: null },
     visibleFields: { type: [Boolean, Array], default: true },
     visibleFieldConfig: { type: Array, default: null },
-    showAction: { type: Boolean, default: false },
-    showReset: { type: Boolean, default: false },
-    showDelete: { type: Boolean, default: false },
-    showHeader: { type: Boolean, default: true },
-    showSelection: { type: Boolean, default: false },
-    showIndex: { type: Boolean, default: false },
+    showAction: { type: Boolean },
+    showReset: { type: Boolean },
+    showDelete: { type: Boolean },
+    showHeader: { type: Boolean },
+    showSelection: { type: Boolean },
+    showIndex: { type: Boolean },
     formatters: {
       type: Object,
       default() {
@@ -432,19 +432,12 @@ export default {
       if (typeof this.data !== 'string') {
         return cb([])
       }
-      const primary = this.stmt
-      primary.parameters.colProps = [field.prop]
-      primary.parameters.params = [
-        {
-          field: field.prop,
-          fieldType: field.type,
-          action: this.getAction(field),
-          value: queryString
-        }
-      ]
+      const param = {}
+      param[field.prop] = queryString
       const res = await request({
         url: this.data,
-        method: 'get'
+        method: 'post',
+        data: param
       })
       cb(getDeepProp(res, this.stmt.rowsName.split('.')))
     },

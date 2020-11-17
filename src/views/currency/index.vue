@@ -4,8 +4,6 @@
       <mone-query
         ref="moneQuery"
         border
-        show-action
-        show-index
         :config="config"
         :data="data"
         :formatters="formatters"
@@ -39,8 +37,8 @@ export default {
   data() {
     return {
       listLoading: true,
-      config: '/api/currency/config?code=LIST_USER',
-      data: '/api/currency/data?code=LIST_USER',
+      config: '/api/currency/config/LIST_USER',
+      data: '/api/currency/data/LIST_USER',
       formatters: {
       }
     }

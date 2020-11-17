@@ -32,7 +32,7 @@ var __awaiter =
 const CONFIG = {
   pageSize: 20,
   pageIndex: 1,
-  pageName: 'pageIndex',
+  pageName: 'page',
   sizeName: 'pageSize',
   rowsName: 'result',
   totalName: 'total',
@@ -97,9 +97,17 @@ export class ListView extends ViewModel {
       try {
         const args = Array.from(arguments)
         this.loading = true
+        const url = args.shift()
+        const originParams = args.shift()
+        const params = {}
+        Object.assign(params, originParams.page)
+        for (let i = 0, len = originParams.params.length; i < len; i++) {
+          params[originParams.params[i].field] = (originParams.params[i].value)
+        }
         const res = yield request({
-          url: args.shift(),
-          method: 'get'
+          url: url,
+          method: 'post',
+          data: params
         })
         this.rows = getDeepProp(res, this.rowsName.split('.'))
         this.total = getDeepProp(res, this.totalName.split('.'))
