@@ -1,9 +1,13 @@
-<template functional>
-  <el-select v-model="valueProxy" v-bind="$attrs" collapse-tags v-on="$listeners">
-    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
+<template>
+  <el-select v-model="currentValue" placeholder="请选择" multiple collapse-tags @change="handleChange">
+    <el-option
+      v-for="item in currentoptions"
+      :key="item.value"
+      :label="item.label"
+      :value="item.value"
+    />
   </el-select>
 </template>
-
 <script>
 export default {
   name: 'MoneOptions',
@@ -12,7 +16,7 @@ export default {
       type: Array,
       required: true,
       default() {
-        return this.$attrs.multiple ? [] : null
+        return []
       }
     },
     options: {
@@ -23,7 +27,10 @@ export default {
     }
   },
   data() {
-    return {}
+    return {
+      currentValue: this.value,
+      currentoptions: this.options
+    }
   },
   computed: {
     valueProxy: {
@@ -34,6 +41,13 @@ export default {
         this.$emit('input', val)
       }
     }
+  },
+  methods: {
+    handleChange(val) {
+      this.$emit('input', val)
+    }
   }
 }
 </script>
+<style scoped>
+</style>
