@@ -89,7 +89,8 @@ export class ListView extends ViewModel {
       page: {
         [this.pageName]: this.pageIndex,
         [this.sizeName]: this.pageSize
-      }
+      },
+      dataMethod: 'post'
     }
   }
   load() {
@@ -99,16 +100,26 @@ export class ListView extends ViewModel {
         this.loading = true
         const url = args.shift()
         const originParams = args.shift()
+        const dataMethod = args.shift()
         const params = {}
         Object.assign(params, originParams.page)
         for (let i = 0, len = originParams.params.length; i < len; i++) {
           params[originParams.params[i].field] = (originParams.params[i].value)
         }
-        const res = yield request({
-          url: url,
-          method: 'post',
-          data: params
-        })
+        let res
+        if (dataMethod.toLowerCase() === 'get') {
+          res = yield request({
+            url: url,
+            method: dataMethod,
+            params: params
+          })
+        } else {
+          res = yield request({
+            url: url,
+            method: dataMethod,
+            data: params
+          })
+        }
         this.rows = getDeepProp(res, this.rowsName.split('.'))
         this.total = getDeepProp(res, this.totalName.split('.'))
         return Promise.resolve(res)

@@ -16,8 +16,9 @@ export default class Col {
     this.options = data.options
   }
   static TYPES = {
-    varchar: 'el-autocomplete',
-    option: 'mone-options',
+    text: 'el-input',
+    autocomplete: 'el-autocomplete',
+    option: 'MoneOptions',
     date: 'el-date-picker',
     datetime: 'el-date-picker'
     // bit: 'el-checkbox',

@@ -62,7 +62,13 @@ export const constantRoutes = [
       path: 'index',
       name: 'Currency',
       component: () => import('@/views/currency/index'),
-      meta: { title: '通用查询', icon: 'table' }
+      meta: {
+        title: '通用查询',
+        icon: 'table',
+        config: '/api/currency/config/LIST_USER',
+        data: '/api/currency/data/LIST_USER',
+        dataMethod: 'post'
+      }
     }]
   }
 ]

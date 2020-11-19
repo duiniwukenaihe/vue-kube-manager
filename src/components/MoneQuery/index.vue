@@ -7,13 +7,10 @@
           v-for="item in cols"
           :key="item.prop"
           v-model="PARAMS[item.prop].value"
+          :style="'width:' + (item.width ? item.width : '200px')"
           class="filter-item"
           clearable
-          :fetch-suggestions="
-            (queryString, cb) => {
-              querySearchAsync(queryString, cb, item);
-            }
-          "
+          :fetch-suggestions="(queryString, cb) => { querySearchAsync(queryString, cb, item) }"
           :value-key="item.prop"
           :options="item.options"
           :multiple="item.multiple || true"
@@ -117,7 +114,7 @@
       />
     </div>
     <div v-else class="error-box">
-      <p>╮(╯▽╰)╭ &nbsp;Sorry~ loading failed...</p>
+      <p>Sorry~ loading failed...</p>
       <el-button size="large" type="text" icon="el-icon-refresh" :loading="CONFIGLoading" @click="loadConfig()">
         Retry
       </el-button>
@@ -130,6 +127,7 @@ import Col from '@/components/MoneQuery/class/Col'
 import { ListView, Param, getDeepProp } from '@/components/MoneQuery/class/ViewModel'
 import FieldGroup from '@/components/MoneQuery/class/FieldGroup'
 import showField from './show-field'
+import MoneOptions from './options'
 import request from '@/utils/request'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
@@ -137,11 +135,14 @@ export default {
   name: 'MoneQuery',
   components: {
     showField,
-    Pagination
+    Pagination,
+    MoneOptions
   },
   props: {
     config: { type: [Object, String], required: true },
+    configMethod: { type: String, default: 'get' },
     data: { type: [Array, String], required: true },
+    dataMethod: { type: String, default: 'get' },
     border: { type: Boolean, default: true },
     primaryKey: { type: String, default: 'id' },
     pageName: { type: String, default: 'page' },
@@ -217,12 +218,10 @@ export default {
       try {
         this.CONFIGLoading = true
         if (typeof this.config === 'string') {
-          console.log('request...')
           const response = await request({
             url: this.config,
-            method: 'get'
+            method: this.configMethod
           })
-          console.log(response)
           this.CONFIG = response.result
           this.$emit('config-success', response.result)
         } else {
@@ -327,6 +326,8 @@ export default {
     getInitVal(col) {
       switch (col.type) {
         case 'option':
+          console.log('getInitVal, option, col: ', col)
+          return []
         case 'date':
         case 'datetime':
           return []
@@ -348,7 +349,7 @@ export default {
     getAction(col) {
       if (col.action) return col.action
       switch (col.type) {
-        case 'varchar':
+        case 'autocomplete':
           return 'lk'
         case 'option':
           return 'in'
@@ -363,12 +364,19 @@ export default {
         const field = _params[x]
         if (!field) return
         switch (field.fieldType) {
-          case 'varchar':
+          case 'text':
+            console.log('text field: ', field)
+            if (field.value) {
+              pars.push(field)
+            }
+            break
+          case 'autocomplete':
             if (field.value) {
               pars.push(field)
             }
             break
           case 'option':
+            console.log('option field: ', field)
             if (field.value && field.value.length) {
               pars.push(field)
             }
@@ -400,6 +408,7 @@ export default {
       if (primary.loading) return false
       primary.parameters.colProps = this.showProps
       primary.parameters.params = this.formatParams()
+      primary.parameters.dataMethod = this.dataMethod
       this.$emit('search', primary.parameters)
       if (typeof this.data !== 'string') {
         primary.rows = this.data
@@ -410,7 +419,7 @@ export default {
           const res = await primary.load(
             this.data,
             primary.parameters,
-            'GET'
+            this.dataMethod
           )
           this.$emit('data-success', res)
         } catch (e) {
@@ -436,7 +445,7 @@ export default {
       param[field.prop] = queryString
       const res = await request({
         url: this.data,
-        method: 'post',
+        method: this.dataMethod,
         data: param
       })
       cb(getDeepProp(res, this.stmt.rowsName.split('.')))
