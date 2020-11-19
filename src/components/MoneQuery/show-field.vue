@@ -40,7 +40,9 @@
         </el-col>
       </el-checkbox-group>
     </el-row>
-    <el-button slot="reference" class="m-l" icon="el-icon-circle-plus-outline">选择显示的字段</el-button>
+    <el-button slot="reference" class="filter-item" style="margin-left: 10px;" type="default" icon="el-icon-circle-plus-outline">
+      选择显示的字段
+    </el-button>
   </el-popover>
 </template>
 
@@ -49,34 +51,12 @@ export default {
   name: 'ShowField',
   components: {},
   props: {
-    fields: {
-      type: Array,
-      required: true
-    },
-    placement: {
-      type: String,
-      default: 'top'
-    },
-    width: {
-      type: String,
-      default: '540px'
-    },
-    trigger: {
-      type: String,
-      default: 'click'
-    },
-    config: {
-      type: Array,
-      default() {
-        return []
-      }
-    },
-    value: {
-      type: Array,
-      default() {
-        return []
-      }
-    }
+    fields: { type: Array, required: true },
+    placement: { type: String, default: 'top' },
+    width: { type: String, default: '540px' },
+    trigger: { type: String, default: 'click' },
+    config: { type: Array, default() { return [] } },
+    value: { type: Array, default() { return [] } }
   },
   data() {
     return {
@@ -143,13 +123,4 @@ export default {
 </script>
 
 <style lang="scss">
-.show-field {
-  box-sizing: border-box;
-  .m-l {
-    margin-left: 12px;
-  }
-  .f-g-t {
-    margin: 4px 0 8px 0;
-  }
-}
 </style>
