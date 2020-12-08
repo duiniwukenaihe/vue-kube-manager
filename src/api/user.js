@@ -34,6 +34,14 @@ export function listUser(query) {
   })
 }
 
+export function updateUser(data) {
+  return request({
+    url: '/api/user',
+    method: 'put',
+    data
+  })
+}
+
 export function enableUser(id) {
   return request({
     url: '/api/user/enable/' + id,
@@ -43,7 +51,7 @@ export function enableUser(id) {
 
 export function disableUser(id) {
   return request({
-    url: '/api/user/diable/' + id,
+    url: '/api/user/disable/' + id,
     method: 'put'
   })
 }

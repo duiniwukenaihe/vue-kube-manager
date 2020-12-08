@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.organizationName" placeholder="组织" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-if="checkPermission(['SYS_ADMIN'])" v-model="listQuery.organizationName" placeholder="组织" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.name" placeholder="用户名" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.enabled" placeholder="状态" clearable class="filter-item" style="width: 130px">
         <el-option v-for="item in statusOptions" :key="item.key" :label="item.display_name" :value="item.key" />
@@ -25,20 +25,12 @@
     >
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="organizationName" label="组织" width="160px" />
       <el-table-column prop="name" label="名字" min-width="180px" />
-      <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuLimitsFormatter" />
-      <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memLimitsFormatter" />
+      <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuFormatter" />
+      <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memFormatter" />
       <el-table-column prop="gpuCountLimits" label="GPU" min-width="80px" align="center" />
-      <el-table-column prop="gpuMemLimits" label="显存" min-width="80px" align="center" :formatter="gpuMemLimitsFormatter" />
-      <el-table-column label="创建时间" min-width="150px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.createTime }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="上次登录" min-width="150px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.lastLoginTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column prop="gpuMemLimits" label="显存" min-width="80px" align="center" :formatter="gpuMemFormatter" />
+      <el-table-column prop="createTime" label="创建时间" min-width="150px" align="center" />
+      <el-table-column prop="lastLoginTime" label="上次登录" min-width="150px" align="center" />
       <el-table-column label="状态" width="80" align="center">
         <template slot-scope="{row}">
           <el-tag :type="row.enabled | statusStyleFilter">
@@ -61,13 +53,41 @@
       </el-table-column>
     </el-table>
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
+
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
+        <el-form-item label="名字" prop="name">
+          <el-input v-model="temp.name" />
+        </el-form-item>
+        <el-form-item label="CPU核心数" prop="cpuLimits">
+          <el-input-number v-model="temp.cpuLimits" :formatter="cpuFormatter" :min="0" :max="64" :precision="3" :step="0.1" />
+        </el-form-item>
+        <el-form-item label="内存 (M)" prop="memLimits">
+          <el-input-number v-model="temp.memLimits" :min="100" :max="64000" :step="100" />
+        </el-form-item>
+        <el-form-item label="GPU数量" prop="gpuCountLimits">
+          <el-input-number v-model="temp.gpuCountLimits" :min="0" :max="10" />
+        </el-form-item>
+        <el-form-item label="显存（G）" prop="gpuMemLimits">
+          <el-input-number v-model="temp.gpuMemLimits" :min="0" :max="40" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">
+          取消
+        </el-button>
+        <el-button type="primary" @click="dialogStatus==='create'?createData():updateData()">
+          确认
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import waves from '@/directive/waves' // waves directive
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-import { listUser, enableUser, disableUser } from '@/api/user'
+import { listUser, enableUser, disableUser, updateUser } from '@/api/user'
 import permission from '@/directive/permission/index.js'
 import { checkPermission } from '@/utils/auth.js'
 
@@ -113,7 +133,15 @@ export default {
       statusOptions,
       sortOptions: [{ label: '时间升序', key: '+createTime' }, { label: '时间降序', key: '-createTime' }],
       temp: {
+        id: '',
+        name: '',
+        cpuLimits: 0.5,
+        memLimits: 500,
+        gpuCountLimits: 0,
+        gpuMemLimits: 0
       },
+      dialogFormVisible: false,
+      dialogStatus: '',
       textMap: {
         update: '编辑',
         create: '新建'
@@ -159,6 +187,34 @@ export default {
       }
       this.handleFilter()
     },
+    handleUpdate(row) {
+      this.temp = Object.assign({}, row) // copy and format obj
+      this.temp.cpuLimits = (this.temp.cpuLimits / 1000).toFixed(3)
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    updateData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = Object.assign({}, this.temp)
+          tempData.cpuLimits *= 1000
+          updateUser(tempData).then(() => {
+            const index = this.list.findIndex(v => v.id === tempData.id)
+            this.list.splice(index, 1, tempData)
+            this.dialogFormVisible = false
+            this.$notify({
+              title: '成功',
+              message: '更新成功',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
     handleEnable(row) {
       enableUser(row.id).then(() => {
         row.enabled = true
@@ -172,7 +228,7 @@ export default {
     },
     handleDisable(row) {
       disableUser(row.id).then(() => {
-        row.status = false
+        row.enabled = false
         this.$notify({
           title: '成功',
           message: '用户已禁用',
@@ -181,16 +237,26 @@ export default {
         })
       })
     },
-    cpuLimitsFormatter(row, column) {
-      return (row.cpuLimits / 1000).toFixed(3)
+    cpuFormatter(row, column) {
+      return (row.cpuLimits / 1000) + '核'
     },
-    memLimitsFormatter(row, column) {
+    memFormatter(row, column) {
       const requests = row.memLimits
       return requests + 'M'
     },
-    gpuMemLimitsFormatter(row, column) {
+    gpuCountFormatter(row, column) {
+      const requests = row.gpuCountLimits
+      if (requests > 0) {
+        return requests + '块'
+      }
+      return '-'
+    },
+    gpuMemFormatter(row, column) {
       const requests = row.gpuMemLimits
-      return requests + 'G'
+      if (requests > 0) {
+        return requests + 'G'
+      }
+      return '-'
     }
   }
 }

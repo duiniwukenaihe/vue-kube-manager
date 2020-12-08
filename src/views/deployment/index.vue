@@ -39,31 +39,11 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column v-if="checkPermission(['SYS_ADMIN'])" label="命名空间" min-width="100px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.namespace }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="CPU" min-width="80px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.cpuLimits }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="内存" min-width="80px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.memLimits }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="GPU" min-width="80px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.gpuCountLimits }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="显存" min-width="80px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.gpuMemLimits }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="namespace" label="命名空间" min-width="100px" align="center" />
+      <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuFormatter" />
+      <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memFormatter" />
+      <el-table-column prop="gpuCountLimits" label="GPU" min-width="80px" align="center" :formatter="gpuCountFormatter" />
+      <el-table-column prop="gpuMemLimits" label="显存" min-width="80px" align="center" :formatter="gpuMemFormatter" />
       <el-table-column label="镜像" min-width="220px">
         <template slot-scope="{row}">
           <span v-if="row.image" class="link-type" @click="handleFetchPv(row.image)">{{ row.image }}</span>
@@ -444,6 +424,27 @@ export default {
         body.resourceType = 'CPU'
       }
       this.list.unshift(body)
+    },
+    cpuFormatter(row, column) {
+      return (row.cpuLimits / 1000) + '核'
+    },
+    memFormatter(row, column) {
+      const requests = row.memLimits
+      return requests + 'M'
+    },
+    gpuCountFormatter(row, column) {
+      const requests = row.gpuCountLimits
+      if (requests > 0) {
+        return requests + '块'
+      }
+      return '-'
+    },
+    gpuMemFormatter(row, column) {
+      const requests = row.gpuMemLimits
+      if (requests > 0) {
+        return requests + 'G'
+      }
+      return '-'
     }
   }
 }
