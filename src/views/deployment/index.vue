@@ -301,7 +301,10 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const requestBody = this.standardizeRow(this.temp)
+          const requestBody = Object.assign({}, this.temp)
+          requestBody.cpuLimits *= 1000
+          requestBody.cpuRequests = requestBody.cpuLimits
+          requestBody.memRequests = requestBody.memLimits
           createDeployment(requestBody).then(() => {
             this.unshiftNew(this.formatBody(requestBody))
             this.dialogFormVisible = false
@@ -316,7 +319,8 @@ export default {
       })
     },
     handleUpdate(row) {
-      this.temp = this.standardizeRow(row) // copy and format obj
+      this.temp = Object.assign({}, row) // copy and format obj
+      this.temp.cpuLimits = (this.temp.cpuLimits / 1000).toFixed(3)
       this.temp.timestamp = new Date(this.temp.timestamp)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
@@ -328,11 +332,12 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
+          tempData.cpuLimits *= 1000
           tempData.cpuRequests = tempData.cpuLimits
           tempData.memRequests = tempData.memLimits
           updateDeployment(tempData).then(() => {
             const index = this.list.findIndex(v => v.uid === this.temp.uid)
-            this.list.splice(index, 1, this.formatBody(this.temp))
+            this.list.splice(index, 1, tempData)
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -395,25 +400,6 @@ export default {
           return v[j]
         }
       }))
-    },
-    standardizeRow(row) {
-      console.log('uid: ' + row.uid)
-      const body = Object.assign({}, row)
-      body.cpuRequests = body.cpuLimits
-      body.memLimits = parseInt(body.memLimits)
-      body.memRequests = body.memLimits
-      body.gpuCountLimits = body.gpuCountLimits === '-' ? 0 : body.gpuCountLimits
-      body.gpuMemLimits = body.gpuMemLimits === '-' ? 0 : parseInt(body.gpuMemLimits)
-      console.log(body)
-      return body
-    },
-    formatBody(body) {
-      const row = Object.assign({}, body)
-      row.status = 'Starting'
-      row.memLimits = row.memLimits + 'M'
-      row.gpuCountLimits = row.gpuCountLimits > 0 ? row.gpuCountLimits : '-'
-      row.gpuMemLimits = row.gpuMemLimits > 0 ? row.gpuMemLimits + 'G' : '-'
-      return row
     },
     unshiftNew(body) {
       body.availableReplicas = 0
