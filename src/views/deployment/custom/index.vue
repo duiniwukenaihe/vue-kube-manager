@@ -161,7 +161,7 @@ const statusTypeKeyValue = statusOptions.reduce((acc, cur) => {
 }, {})
 
 export default {
-  name: 'ComplexTable',
+  name: 'Deployment',
   components: { Pagination },
   directives: { waves, permission },
   filters: {

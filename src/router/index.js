@@ -81,12 +81,33 @@ export const asyncRoutes = [
   {
     path: '/deployment',
     component: Layout,
+    meta: {
+      title: '应用管理',
+      icon: 'component'
+    },
+    redirect: '/deployment/custom',
     children: [
       {
-        path: 'index',
-        name: 'deployment',
-        component: () => import('@/views/deployment/index'),
-        meta: { title: '应用管理', icon: 'component' }
+        path: 'custom',
+        name: 'Deployment',
+        component: () => import('@/views/deployment/custom/index'),
+        meta: { title: '自建应用', icon: 'custom' }
+      },
+      {
+        path: 'experiment',
+        name: 'Experiment',
+        component: () => import('@/views/deployment/experiment/index'),
+        meta: { title: '实验任务', icon: 'lab' }
+      },
+      {
+        path: 'template',
+        name: 'Template',
+        component: () => import('@/views/deployment/template/index'),
+        meta: {
+          roles: ['SYS_ADMIN', 'ORG_ADMIN'],
+          title: '实验模板',
+          icon: 'template'
+        }
       }
     ]
   },
@@ -94,7 +115,7 @@ export const asyncRoutes = [
   {
     path: '/user',
     component: Layout,
-    name: 'Resource',
+    name: 'User',
     meta: { roles: ['SYS_ADMIN', 'ORG_ADMIN'] },
     children: [
       {
@@ -147,7 +168,7 @@ export const asyncRoutes = [
     component: Layout,
     redirect: '/example/table',
     name: 'Example',
-    meta: { title: '镜像管理', icon: 'el-icon-s-help' },
+    meta: { title: '镜像管理', icon: 'docker' },
     children: [
       {
         path: 'table',
