@@ -40,26 +40,23 @@ export function listTask(params) {
   })
 }
 
-export function startInstance(params) {
+export function startInstance(id) {
   return request({
-    url: '/api/experiment/task',
-    method: 'get',
-    params
+    url: '/api/experiment/instance/start/' + id,
+    method: 'put'
   })
 }
 
-export function restartInstance(params) {
+export function restartInstance(id) {
   return request({
-    url: '/api/experiment/task',
-    method: 'get',
-    params
+    url: '/api/experiment/instance/restart/' + id,
+    method: 'put'
   })
 }
 
-export function shutdownInstance(params) {
+export function shutdownInstance(id) {
   return request({
-    url: '/api/experiment/task',
-    method: 'get',
-    params
+    url: '/api/experiment/instance/shutdown/' + id,
+    method: 'put'
   })
 }

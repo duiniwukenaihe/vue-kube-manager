@@ -2,13 +2,8 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-if="checkPermission(['SYS_ADMIN'])" v-model="listQuery.organizationName" placeholder="组织" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.name" placeholder="用户名" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.enabled" placeholder="状态" clearable class="filter-item" style="width: 130px">
-        <el-option v-for="item in statusOptions" :key="item.key" :label="item.display_name" :value="item.key" />
-      </el-select>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
-        <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
-      </el-select>
+      <el-input v-model="listQuery.displayName" placeholder="名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.description" placeholder="描述" style="width: 200px;" class="filter-item" />
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         查询
       </el-button>
@@ -24,25 +19,21 @@
       @sort-change="sortChange"
     >
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="organizationName" label="组织" width="160px" />
-      <el-table-column prop="displayName" label="名字" min-width="120px" />
+      <el-table-column prop="displayName" label="名称" min-width="120px" />
       <el-table-column prop="description" label="描述" min-width="200px" />
-      <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuFormatter" />
-      <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memFormatter" />
-      <el-table-column prop="gpuCountLimits" label="GPU" min-width="80px" align="center" :formatter="gpuCountFormatter" />
-      <el-table-column prop="gpuMemLimits" label="显存" min-width="80px" align="center" :formatter="gpuMemFormatter" />
-      <el-table-column prop="createTime" label="创建时间" min-width="150px" align="center" />
-      <el-table-column label="操作" align="center" width="300" class-name="small-padding fixed-width">
+      <el-table-column prop="startTime" label="启动时间" min-width="150px" align="center" />
+      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
-          <el-button v-if="!row.running" type="primary" size="mini" @click="handleStart(row)">
+          <el-button v-if="row.status=='Free'" type="primary" size="mini" @click="handleStart(row)">
             启动
           </el-button>
-          <el-button v-if="row.running" type="primary" size="mini" @click="handleLaunch(row)">
+          <el-button v-if="row.status=='Running'" type="primary" size="mini" @click="handleLaunch(row)">
             进入
           </el-button>
-          <el-button v-if="row.running" type="warning" size="mini" @click="handleRestart(row)">
+          <el-button v-if="row.status!='Free'" type="warning" size="mini" @click="handleRestart(row)">
             重启
           </el-button>
-          <el-button v-if="row.running" type="danger" size="mini" @click="handleShutdown(row)">
+          <el-button v-if="row.status!='Free'" type="danger" size="mini" @click="handleShutdown(row)">
             停止
           </el-button>
         </template>
@@ -55,7 +46,7 @@
 <script>
 import waves from '@/directive/waves' // waves directive
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-import { listTask, createTemplate, updateTemplate, deleteTemplate } from '@/api/experiment'
+import { listTask, startInstance, restartInstance, shutdownInstance } from '@/api/experiment'
 import permission from '@/directive/permission/index.js'
 import { checkPermission } from '@/utils/auth.js'
 
@@ -155,68 +146,37 @@ export default {
       }
       this.handleFilter()
     },
-    handleCreate() {
-      this.resetTemp()
-      this.dialogStatus = 'create'
-      this.dialogFormVisible = true
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
-      })
+    handleLaunch(row) {
+      window.open(row.path)
     },
-    createData() {
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          const requestBody = Object.assign({}, this.temp)
-          requestBody.cpuLimits *= 1000
-          requestBody.cpuRequests = requestBody.cpuLimits
-          requestBody.memRequests = requestBody.memLimits
-          createTemplate(requestBody).then(() => {
-            this.unshiftNew(this.formatBody(requestBody))
-            this.dialogFormVisible = false
-            this.$notify({
-              title: '成功',
-              message: '创建成功',
-              type: 'success',
-              duration: 2000
-            })
-          })
-        }
-      })
-    },
-    handleUpdate(row) {
-      this.temp = Object.assign({}, row) // copy and format obj
-      this.temp.cpuLimits = (this.temp.cpuLimits / 1000).toFixed(3)
-      this.dialogStatus = 'update'
-      this.dialogFormVisible = true
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
-      })
-    },
-    updateData() {
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          const tempData = Object.assign({}, this.temp)
-          tempData.cpuLimits *= 1000
-          updateTemplate(tempData).then(() => {
-            const index = this.list.findIndex(v => v.id === tempData.id)
-            this.list.splice(index, 1, tempData)
-            this.dialogFormVisible = false
-            this.$notify({
-              title: '成功',
-              message: '更新成功',
-              type: 'success',
-              duration: 2000
-            })
-          })
-        }
-      })
-    },
-    handleDelete(row) {
-      deleteTemplate(row.id).then(() => {
+    handleStart(row) {
+      startInstance(row.id).then(() => {
         row.enabled = true
         this.$notify({
           title: '成功',
-          message: '模板已删除',
+          message: '正在启动应用，请稍候',
+          type: 'success',
+          duration: 2000
+        })
+      })
+    },
+    handleRestart(row) {
+      restartInstance(row.id).then(() => {
+        row.enabled = true
+        this.$notify({
+          title: '成功',
+          message: '正在重新启动，请稍候',
+          type: 'success',
+          duration: 2000
+        })
+      })
+    },
+    handleShutdown(row) {
+      shutdownInstance(row.id).then(() => {
+        row.enabled = true
+        this.$notify({
+          title: '成功',
+          message: '正在停止应用，请稍候',
           type: 'success',
           duration: 2000
         })
