@@ -27,8 +27,9 @@
       @sort-change="sortChange"
     >
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="organizationName" label="组织" width="160px" />
-      <el-table-column prop="displayName" label="名字" min-width="120px" />
+      <el-table-column prop="displayName" label="实验名称" min-width="120px" />
       <el-table-column prop="description" label="描述" min-width="200px" />
+      <el-table-column prop="image" label="镜像" min-width="200px" />
       <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuFormatter" />
       <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memFormatter" />
       <el-table-column prop="gpuCountLimits" label="GPU" min-width="80px" align="center" :formatter="gpuCountFormatter" />
@@ -51,6 +52,12 @@
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item label="实验名称" prop="displayName">
           <el-input v-model="temp.displayName" />
+        </el-form-item>
+        <el-form-item label="描述" prop="displayName">
+          <el-input v-model="temp.description" />
+        </el-form-item>
+        <el-form-item label="镜像" prop="imageId">
+          <el-input v-model="temp.imageId" />
         </el-form-item>
         <el-form-item label="CPU核心数" prop="cpuLimits">
           <el-input-number v-model="temp.cpuLimits" :formatter="cpuFormatter" :min="0" :max="64" :precision="3" :step="0.1" />
@@ -127,7 +134,8 @@ export default {
       sortOptions: [{ label: '时间升序', key: '+createTime' }, { label: '时间降序', key: '-createTime' }],
       temp: {
         id: '',
-        name: '',
+        dispalyName: '',
+        description: '',
         cpuLimits: 0.5,
         memLimits: 500,
         gpuCountLimits: 0,
@@ -179,6 +187,17 @@ export default {
         this.listQuery.sort = '-id'
       }
       this.handleFilter()
+    },
+    resetTemp() {
+      this.temp = {
+        dispalyName: '',
+        description: '',
+        image: 100002,
+        cpuLimits: 0.5,
+        memLimits: 500,
+        gpuCountLimits: 0,
+        gpuMemLimits: 0
+      }
     },
     handleCreate() {
       this.resetTemp()

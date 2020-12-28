@@ -22,6 +22,13 @@
       <el-table-column prop="displayName" label="名称" min-width="120px" />
       <el-table-column prop="description" label="描述" min-width="200px" />
       <el-table-column prop="startTime" label="启动时间" min-width="150px" align="center" />
+      <el-table-column label="状态" width="80" align="center">
+        <template slot-scope="{row}">
+          <el-tag :type="row.status | statusStyleFilter">
+            {{ row.status | statusFilter }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
           <el-button v-if="row.status=='Free'" type="primary" size="mini" @click="handleStart(row)">
@@ -51,8 +58,10 @@ import permission from '@/directive/permission/index.js'
 import { checkPermission } from '@/utils/auth.js'
 
 const statusOptions = [
-  { key: 'true', display_name: '有效' },
-  { key: 'false', display_name: '失效' }
+  { key: 'Free', display_name: '未运行' },
+  { key: 'Running', display_name: '运行中' },
+  { key: 'Starting', display_name: '处理中' },
+  { key: 'Failed', display_name: '失败' }
 ]
 
 const statusTypeKeyValue = statusOptions.reduce((acc, cur) => {
@@ -70,8 +79,10 @@ export default {
     },
     statusStyleFilter(status) {
       const statusMap = {
-        true: 'success',
-        false: 'info'
+        'Free': 'info',
+        'Running': 'success',
+        'Starting': 'primary',
+        'Failed': 'danger'
       }
       return statusMap[status]
     }

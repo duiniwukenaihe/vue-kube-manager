@@ -33,7 +33,7 @@
       </el-table-column>
       <el-table-column label="应用名称" min-width="150px">
         <template slot-scope="{row}">
-          <a :href="'//node59/' + row.uid + '/'" target="_blank" class="link-type">{{ row.name }}</a>
+          <a :href="'//kube-manager.ingress/' + row.uid + '/'" target="_blank" class="link-type">{{ row.name }}</a>
           <el-tag v-if="row.resourceType=='GPU'" type="success">
             GPU
           </el-tag>
