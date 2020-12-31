@@ -2,10 +2,7 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-if="checkPermission(['SYS_ADMIN'])" v-model="listQuery.organizationName" placeholder="组织" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.name" placeholder="用户名" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.enabled" placeholder="状态" clearable class="filter-item" style="width: 130px">
-        <el-option v-for="item in statusOptions" :key="item.key" :label="item.display_name" :value="item.key" />
-      </el-select>
+      <el-input v-model="listQuery.displayName" placeholder="实验名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
@@ -36,11 +33,11 @@
       <el-table-column prop="gpuMemLimits" label="显存" min-width="80px" align="center" :formatter="gpuMemFormatter" />
       <el-table-column prop="createTime" label="创建时间" min-width="150px" align="center" />
       <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
-        <template slot-scope="{row}">
+        <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button type="danger" size="mini" @click="handleDelete(row)">
+          <el-button type="danger" size="mini" @click="handleDelete(row,$index)">
             删除
           </el-button>
         </template>
@@ -215,7 +212,7 @@ export default {
           requestBody.cpuRequests = requestBody.cpuLimits
           requestBody.memRequests = requestBody.memLimits
           createTemplate(requestBody).then(() => {
-            this.unshiftNew(this.formatBody(requestBody))
+            this.list.unshift(requestBody)
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -241,6 +238,8 @@ export default {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
           tempData.cpuLimits *= 1000
+          tempData.cpuRequests = tempData.cpuLimits
+          tempData.memRequests = tempData.memLimits
           updateTemplate(tempData).then(() => {
             const index = this.list.findIndex(v => v.id === tempData.id)
             this.list.splice(index, 1, tempData)
@@ -255,7 +254,7 @@ export default {
         }
       })
     },
-    handleDelete(row) {
+    handleDelete(row, index) {
       deleteTemplate(row.id).then(() => {
         row.enabled = true
         this.$notify({
@@ -264,6 +263,7 @@ export default {
           type: 'success',
           duration: 2000
         })
+        this.list.splice(index, 1)
       })
     },
     cpuFormatter(row, column) {

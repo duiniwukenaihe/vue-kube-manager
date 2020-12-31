@@ -24,11 +24,10 @@ export function updateTemplate(data) {
   })
 }
 
-export function deleteTemplate(namespace, name) {
+export function deleteTemplate(id) {
   return request({
-    url: '/api/experiment/template',
-    method: 'delete',
-    params: { namespace: namespace, name: name }
+    url: '/api/experiment/template/' + id,
+    method: 'delete'
   })
 }
 

@@ -58,10 +58,11 @@ import permission from '@/directive/permission/index.js'
 import { checkPermission } from '@/utils/auth.js'
 
 const statusOptions = [
-  { key: 'Free', display_name: '未运行' },
   { key: 'Running', display_name: '运行中' },
-  { key: 'Starting', display_name: '处理中' },
-  { key: 'Failed', display_name: '失败' }
+  { key: 'Starting', display_name: '启动中' },
+  { key: 'Pending', display_name: '阻塞' },
+  { key: 'Error', display_name: '失败' },
+  { key: 'Free', display_name: '未运行' }
 ]
 
 const statusTypeKeyValue = statusOptions.reduce((acc, cur) => {
@@ -79,10 +80,11 @@ export default {
     },
     statusStyleFilter(status) {
       const statusMap = {
-        'Free': 'info',
         'Running': 'success',
         'Starting': 'primary',
-        'Failed': 'danger'
+        'Pending': 'warning',
+        'Error': 'danger',
+        'Free': 'info'
       }
       return statusMap[status]
     }

@@ -72,10 +72,10 @@
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button v-if="row.status=='Released'" size="mini" type="success" @click="handleStart(row)">
+          <el-button v-if="row.status=='Free'" size="mini" type="success" @click="handleStart(row)">
             启动
           </el-button>
-          <el-button v-if="row.status!='Released'" size="mini" type="success" @click="handleStop(row)">
+          <el-button v-if="row.status!='Free'" size="mini" type="success" @click="handleStop(row)">
             释放
           </el-button>
           <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
@@ -150,8 +150,9 @@ import { checkPermission } from '@/utils/auth.js'
 const statusOptions = [
   { key: 'Running', display_name: '运行中' },
   { key: 'Starting', display_name: '启动中' },
-  { key: 'Failed', display_name: '失败' },
-  { key: 'Released', display_name: '已释放' }
+  { key: 'Pending', display_name: '阻塞' },
+  { key: 'Error', display_name: '失败' },
+  { key: 'Free', display_name: '已释放' }
 ]
 
 // arr to obj, such as { CN : "China", US : "USA" }
@@ -180,10 +181,11 @@ export default {
       const statusMap = {
         True: 'success',
         False: 'danger',
-        Starting: 'info',
+        Starting: 'primary',
+        Pending: 'warning',
         Running: 'success',
-        Failed: 'danger',
-        Released: 'info',
+        Error: 'danger',
+        Free: 'info',
         Unknown: 'info'
       }
       return statusMap[status]
@@ -306,7 +308,7 @@ export default {
           requestBody.cpuRequests = requestBody.cpuLimits
           requestBody.memRequests = requestBody.memLimits
           createDeployment(requestBody).then(() => {
-            this.unshiftNew(this.formatBody(requestBody))
+            this.unshiftNew(requestBody)
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
