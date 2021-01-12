@@ -207,10 +207,7 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const requestBody = Object.assign({}, this.temp)
-          requestBody.cpuLimits *= 1000
-          requestBody.cpuRequests = requestBody.cpuLimits
-          requestBody.memRequests = requestBody.memLimits
+          const requestBody = this.formatRequest(this.temp)
           createTemplate(requestBody).then(() => {
             this.list.unshift(requestBody)
             this.dialogFormVisible = false
@@ -227,6 +224,8 @@ export default {
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy and format obj
       this.temp.cpuLimits = (this.temp.cpuLimits / 1000).toFixed(3)
+      this.temp.gpuCountLimits = (this.temp.gpuCountLimits / 100).toFixed(2)
+      this.temp.gpuMemLimits = (this.temp.gpuMemLimits / 4).toFixed(2)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -236,13 +235,10 @@ export default {
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const tempData = Object.assign({}, this.temp)
-          tempData.cpuLimits *= 1000
-          tempData.cpuRequests = tempData.cpuLimits
-          tempData.memRequests = tempData.memLimits
-          updateTemplate(tempData).then(() => {
-            const index = this.list.findIndex(v => v.id === tempData.id)
-            this.list.splice(index, 1, tempData)
+          const requestBody = this.formatRequest(this.temp)
+          updateTemplate(requestBody).then(() => {
+            const index = this.list.findIndex(v => v.id === requestBody.id)
+            this.list.splice(index, 1, requestBody)
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -266,6 +262,18 @@ export default {
         this.list.splice(index, 1)
       })
     },
+    formatRequest(temp) {
+      const requestBody = Object.assign({}, temp)
+      requestBody.cpuLimits *= 1000
+      // 资源request默认与limit相同
+      requestBody.cpuRequests = requestBody.cpuLimits
+      requestBody.memRequests = requestBody.memLimits
+      // 显卡数量大于1时, 只能使用整数
+      requestBody.gpuCountLimits = temp.gpuCountLimits > 1 ? Math.floor(temp.gpuCountLimits) : temp.gpuCountLimits
+      requestBody.gpuCountLimits *= 100
+      requestBody.gpuMemLimits = temp.gpuMemLimits * 4
+      return requestBody
+    },
     cpuFormatter(row, column) {
       return (row.cpuLimits / 1000) + '核'
     },
@@ -276,14 +284,14 @@ export default {
     gpuCountFormatter(row, column) {
       const requests = row.gpuCountLimits
       if (requests > 0) {
-        return requests + '块'
+        return requests / 100 + '块'
       }
       return '-'
     },
     gpuMemFormatter(row, column) {
       const requests = row.gpuMemLimits
       if (requests > 0) {
-        return requests + 'G'
+        return requests / 4 + 'G'
       }
       return '-'
     }

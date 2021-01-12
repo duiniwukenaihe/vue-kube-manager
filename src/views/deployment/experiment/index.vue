@@ -205,14 +205,14 @@ export default {
     gpuCountFormatter(row, column) {
       const requests = row.gpuCountLimits
       if (requests > 0) {
-        return requests + '块'
+        return requests / 100 + '块'
       }
       return '-'
     },
     gpuMemFormatter(row, column) {
       const requests = row.gpuMemLimits
       if (requests > 0) {
-        return requests + 'G'
+        return requests / 4 + 'G'
       }
       return '-'
     }

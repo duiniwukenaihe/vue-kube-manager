@@ -107,10 +107,10 @@
           <el-input-number v-model="temp.memLimits" :min="100" :max="64000" :step="100" />
         </el-form-item>
         <el-form-item label="GPU数量" prop="gpuCountLimits">
-          <el-input-number v-model="temp.gpuCountLimits" :min="0" :max="10" />
+          <el-input-number v-model="temp.gpuCountLimits" :min="0" :max="10" :precision="2" :step="0.1" />
         </el-form-item>
         <el-form-item label="显存（G）" prop="gpuMemLimits">
-          <el-input-number v-model="temp.gpuMemLimits" :min="0" :max="40" />
+          <el-input-number v-model="temp.gpuMemLimits" :min="0" :max="40" :step="0.25" />
         </el-form-item>
         <el-form-item label="副本">
           <el-input-number v-model="temp.replicas" :min="1" :max="3" />
@@ -212,7 +212,8 @@ export default {
         'terminal:1.6.1',
         'httpd:2.4.46',
         'ubuntu-desktop-lxde:focal',
-        'centos:7'
+        'centos:7',
+        'nvidia/cuda-dli:v1'
       ],
       replicasOptions: [1, 2, 3],
       sortOptions: [{ label: '时间升序', key: '+creationTimestamp' }, { label: '时间降序', key: '-creationTimestamp' }],
@@ -303,10 +304,7 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const requestBody = Object.assign({}, this.temp)
-          requestBody.cpuLimits *= 1000
-          requestBody.cpuRequests = requestBody.cpuLimits
-          requestBody.memRequests = requestBody.memLimits
+          const requestBody = this.formatRequest(this.temp)
           createDeployment(requestBody).then(() => {
             this.unshiftNew(requestBody)
             this.dialogFormVisible = false
@@ -323,6 +321,8 @@ export default {
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy and format obj
       this.temp.cpuLimits = (this.temp.cpuLimits / 1000).toFixed(3)
+      this.temp.gpuCountLimits = (this.temp.gpuCountLimits / 100).toFixed(2)
+      this.temp.gpuMemLimits = (this.temp.gpuMemLimits / 4).toFixed(2)
       this.temp.timestamp = new Date(this.temp.timestamp)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
@@ -333,13 +333,10 @@ export default {
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const tempData = Object.assign({}, this.temp)
-          tempData.cpuLimits *= 1000
-          tempData.cpuRequests = tempData.cpuLimits
-          tempData.memRequests = tempData.memLimits
-          updateDeployment(tempData).then(() => {
+          const requestBody = this.formatRequest(this.temp)
+          updateDeployment(requestBody).then(() => {
             const index = this.list.findIndex(v => v.uid === this.temp.uid)
-            this.list.splice(index, 1, tempData)
+            this.list.splice(index, 1, requestBody)
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -413,6 +410,18 @@ export default {
       }
       this.list.unshift(body)
     },
+    formatRequest(temp) {
+      const requestBody = Object.assign({}, temp)
+      requestBody.cpuLimits *= 1000
+      // 资源request默认与limit相同
+      requestBody.cpuRequests = requestBody.cpuLimits
+      requestBody.memRequests = requestBody.memLimits
+      // 显卡数量大于1时, 只能使用整数
+      requestBody.gpuCountLimits = temp.gpuCountLimits > 1 ? Math.floor(temp.gpuCountLimits) : temp.gpuCountLimits
+      requestBody.gpuCountLimits *= 100
+      requestBody.gpuMemLimits = temp.gpuMemLimits * 4
+      return requestBody
+    },
     cpuFormatter(row, column) {
       return (row.cpuLimits / 1000) + '核'
     },
@@ -423,14 +432,14 @@ export default {
     gpuCountFormatter(row, column) {
       const requests = row.gpuCountLimits
       if (requests > 0) {
-        return requests + '块'
+        return requests / 100 + '块'
       }
       return '-'
     },
     gpuMemFormatter(row, column) {
       const requests = row.gpuMemLimits
       if (requests > 0) {
-        return requests + 'G'
+        return requests / 4 + 'G'
       }
       return '-'
     }
