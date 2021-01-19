@@ -33,10 +33,12 @@
       </el-table-column>
       <el-table-column label="应用名称" min-width="150px">
         <template slot-scope="{row}">
-          <a :href="'//kube-manager.ingress/' + row.uid + '/'" target="_blank" class="link-type">{{ row.name }}</a>
+          <span>{{ row.name }}</span>
           <el-tag v-if="row.resourceType=='GPU'" type="success">
             GPU
           </el-tag>
+          <a v-if="row.status=='Running'" :href="'//kube-manager.ingress/' + row.ttydMd5 + '/'" target="_blank" class="link-type"> 终端</a>
+          <a v-if="row.status=='Running' && row.webMd5" :href="'//kube-manager.ingress/' + row.webMd5 + '/'" target="_blank" class="link-type"> 网页</a>
         </template>
       </el-table-column>
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="namespace" label="命名空间" min-width="100px" align="center" />
