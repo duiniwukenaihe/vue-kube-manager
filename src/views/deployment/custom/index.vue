@@ -91,16 +91,19 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
-        <el-form-item label="名称" prop="name">
+        <el-form-item v-if="dialogStatus==='create'" label="名称" prop="name">
           <el-input v-model="temp.name" />
         </el-form-item>
         <el-form-item v-permission="['SYS_ADMIN']" label="命名空间" prop="namespace">
           <el-input v-model="temp.namespace" />
         </el-form-item>
-        <el-form-item label="镜像" prop="image">
+        <!-- <el-form-item label="镜像" prop="image">
           <el-select v-model="temp.image" class="filter-item" placeholder="请选择镜像">
             <el-option v-for="item in imageOptions" :key="item" :label="item" :value="item" />
           </el-select>
+        </el-form-item> -->
+        <el-form-item v-if="dialogStatus==='create'" label="镜像" prop="image">
+          <el-input v-model="temp.image" />
         </el-form-item>
         <el-form-item label="CPU核心数" prop="cpuLimits">
           <el-input-number v-model="temp.cpuLimits" :min="0" :max="64" :precision="3" :step="0.1" />
@@ -152,7 +155,7 @@ import { checkPermission } from '@/utils/auth.js'
 const statusOptions = [
   { key: 'Running', display_name: '运行中' },
   { key: 'Starting', display_name: '启动中' },
-  { key: 'Pending', display_name: '阻塞' },
+  { key: 'Pending', display_name: '等待中' },
   { key: 'Error', display_name: '失败' },
   { key: 'Free', display_name: '已释放' }
 ]
@@ -223,7 +226,7 @@ export default {
         uid: '',
         name: '',
         namespace: 'ns100009',
-        image: 'terminal:1.6.1',
+        image: 'tensorflow:2.0.3-gpu-jupyter',
         cpuLimits: 0.5,
         cpuRequests: 0.5,
         memLimits: 500,
@@ -287,7 +290,7 @@ export default {
       this.temp = {
         name: '',
         namespace: 'ns100009',
-        image: 'terminal:1.6.1',
+        image: 'tensorflow:2.0.3-gpu-jupyter',
         cpuLimits: 0.5,
         memLimits: 500,
         gpuCountLimits: 0,
@@ -384,7 +387,7 @@ export default {
           type: 'success',
           duration: 2000
         })
-        row.status = 'Released'
+        row.status = 'Free'
       })
     },
     handleFetchPv(pv) {
