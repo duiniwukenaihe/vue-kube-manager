@@ -2,15 +2,18 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-if="checkPermission(['SYS_ADMIN'])" v-model="listQuery.organizationName" placeholder="组织" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.name" placeholder="用户名" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.name" placeholder="用户名/名字" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.enabled" placeholder="状态" clearable class="filter-item" style="width: 130px">
         <el-option v-for="item in statusOptions" :key="item.key" :label="item.display_name" :value="item.key" />
       </el-select>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-if="false" v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         查询
+      </el-button>
+      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
+        新增
       </el-button>
     </div>
     <el-table
@@ -57,6 +60,9 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
+        <el-form-item v-if="dialogStatus==='create'" label="用户名" prop="username">
+          <el-input v-model="temp.username" />
+        </el-form-item>
         <el-form-item label="名字" prop="name">
           <el-input v-model="temp.name" />
         </el-form-item>
@@ -91,7 +97,7 @@
 <script>
 import waves from '@/directive/waves' // waves directive
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-import { listUser, enableUser, disableUser, updateUser } from '@/api/user'
+import { listUser, enableUser, disableUser, createUser, updateUser } from '@/api/user'
 import permission from '@/directive/permission/index.js'
 import { checkPermission } from '@/utils/auth.js'
 
@@ -190,6 +196,42 @@ export default {
         this.listQuery.sort = '-id'
       }
       this.handleFilter()
+    },
+    resetTemp() {
+      this.temp = {
+        name: '',
+        cpuLimits: 1,
+        memLimits: 2048,
+        gpuCountLimits: 1,
+        gpuMemLimits: 8,
+        password: 'password1'
+      }
+    },
+    handleCreate() {
+      this.resetTemp()
+      this.dialogStatus = 'create'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    createData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const requestBody = this.formatRequest(this.temp)
+          createUser(requestBody).then(() => {
+            requestBody.enabled = true
+            this.list.unshift(requestBody)
+            this.dialogFormVisible = false
+            this.$notify({
+              title: '成功',
+              message: '添加成功',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy and format obj
