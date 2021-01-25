@@ -33,13 +33,16 @@
       </el-table-column>
       <el-table-column label="应用名称" min-width="150px">
         <template slot-scope="{row}">
-          <a :href="'//kube-manager.ingress/' + row.uid + '/'" target="_blank" class="link-type">{{ row.name }}</a>
+          <span>{{ row.name }}</span>
           <el-tag v-if="row.resourceType=='GPU'" type="success">
             GPU
           </el-tag>
+          <a v-if="row.status=='Running'" :href="'//kube-manager.ingress/' + row.ttydMd5 + '/'" target="_blank" class="link-type"> 终端</a>
+          <a v-if="row.status=='Running' && row.webMd5" :href="'//kube-manager.ingress/' + row.webMd5 + '/'" target="_blank" class="link-type"> 网页</a>
         </template>
       </el-table-column>
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="namespace" label="命名空间" min-width="100px" align="center" />
+      <el-table-column v-if="checkPermission(['ORG_ADMIN'])" prop="labels.created-by" label="创建人" min-width="100px" align="center" />
       <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuFormatter" />
       <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memFormatter" />
       <el-table-column prop="gpuCountLimits" label="GPU" min-width="80px" align="center" :formatter="gpuCountFormatter" />
@@ -89,16 +92,19 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
-        <el-form-item label="名称" prop="name">
-          <el-input v-model="temp.name" />
+        <el-form-item v-if="dialogStatus==='create'" label="名称" prop="name">
+          <el-input v-model="temp.name" placeholder="建议全小写字母加数字" />
         </el-form-item>
         <el-form-item v-permission="['SYS_ADMIN']" label="命名空间" prop="namespace">
           <el-input v-model="temp.namespace" />
         </el-form-item>
-        <el-form-item label="镜像" prop="image">
+        <!-- <el-form-item label="镜像" prop="image">
           <el-select v-model="temp.image" class="filter-item" placeholder="请选择镜像">
             <el-option v-for="item in imageOptions" :key="item" :label="item" :value="item" />
           </el-select>
+        </el-form-item> -->
+        <el-form-item v-if="dialogStatus==='create'" label="镜像" prop="image">
+          <el-input v-model="temp.image" placeholder="例: postgres:9.6.20-alpine" />
         </el-form-item>
         <el-form-item label="CPU核心数" prop="cpuLimits">
           <el-input-number v-model="temp.cpuLimits" :min="0" :max="64" :precision="3" :step="0.1" />
@@ -107,10 +113,10 @@
           <el-input-number v-model="temp.memLimits" :min="100" :max="64000" :step="100" />
         </el-form-item>
         <el-form-item label="GPU数量" prop="gpuCountLimits">
-          <el-input-number v-model="temp.gpuCountLimits" :min="0" :max="10" />
+          <el-input-number v-model="temp.gpuCountLimits" :min="0" :max="10" :precision="2" :step="0.1" />
         </el-form-item>
         <el-form-item label="显存（G）" prop="gpuMemLimits">
-          <el-input-number v-model="temp.gpuMemLimits" :min="0" :max="40" />
+          <el-input-number v-model="temp.gpuMemLimits" :min="0" :max="40" :step="0.25" />
         </el-form-item>
         <el-form-item label="副本">
           <el-input-number v-model="temp.replicas" :min="1" :max="3" />
@@ -150,7 +156,7 @@ import { checkPermission } from '@/utils/auth.js'
 const statusOptions = [
   { key: 'Running', display_name: '运行中' },
   { key: 'Starting', display_name: '启动中' },
-  { key: 'Pending', display_name: '阻塞' },
+  { key: 'Pending', display_name: '等待中' },
   { key: 'Error', display_name: '失败' },
   { key: 'Free', display_name: '已释放' }
 ]
@@ -212,15 +218,16 @@ export default {
         'terminal:1.6.1',
         'httpd:2.4.46',
         'ubuntu-desktop-lxde:focal',
-        'centos:7'
+        'centos:7',
+        'nvidia/cuda-dli:v1'
       ],
       replicasOptions: [1, 2, 3],
       sortOptions: [{ label: '时间升序', key: '+creationTimestamp' }, { label: '时间降序', key: '-creationTimestamp' }],
       temp: {
         uid: '',
         name: '',
-        namespace: 'ns100009',
-        image: 'terminal:1.6.1',
+        namespace: '',
+        image: '',
         cpuLimits: 0.5,
         cpuRequests: 0.5,
         memLimits: 500,
@@ -239,8 +246,7 @@ export default {
       pvData: [],
       rules: {
         name: [{ required: true, message: '名称不得为空', trigger: 'blur' }],
-        namespace: [{ required: true, message: '命名空间不得为空', trigger: 'blur' }],
-        image: [{ required: true, message: '镜像不得为空', trigger: 'change' }]
+        image: [{ required: true, message: '镜像不得为空', trigger: 'blur' }]
       },
       downloadLoading: false
     }
@@ -283,8 +289,8 @@ export default {
     resetTemp() {
       this.temp = {
         name: '',
-        namespace: 'ns100009',
-        image: 'terminal:1.6.1',
+        namespace: '',
+        image: '',
         cpuLimits: 0.5,
         memLimits: 500,
         gpuCountLimits: 0,
@@ -303,10 +309,7 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const requestBody = Object.assign({}, this.temp)
-          requestBody.cpuLimits *= 1000
-          requestBody.cpuRequests = requestBody.cpuLimits
-          requestBody.memRequests = requestBody.memLimits
+          const requestBody = this.formatRequest(this.temp)
           createDeployment(requestBody).then(() => {
             this.unshiftNew(requestBody)
             this.dialogFormVisible = false
@@ -323,6 +326,8 @@ export default {
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy and format obj
       this.temp.cpuLimits = (this.temp.cpuLimits / 1000).toFixed(3)
+      this.temp.gpuCountLimits = (this.temp.gpuCountLimits / 100).toFixed(2)
+      this.temp.gpuMemLimits = (this.temp.gpuMemLimits / 4).toFixed(2)
       this.temp.timestamp = new Date(this.temp.timestamp)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
@@ -333,13 +338,12 @@ export default {
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const tempData = Object.assign({}, this.temp)
-          tempData.cpuLimits *= 1000
-          tempData.cpuRequests = tempData.cpuLimits
-          tempData.memRequests = tempData.memLimits
-          updateDeployment(tempData).then(() => {
+          const requestBody = this.formatRequest(this.temp)
+          updateDeployment(requestBody).then(() => {
             const index = this.list.findIndex(v => v.uid === this.temp.uid)
-            this.list.splice(index, 1, tempData)
+            requestBody.availableReplicas = 0
+            requestBody.status = 'Pending'
+            this.list.splice(index, 1, requestBody)
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -385,7 +389,8 @@ export default {
           type: 'success',
           duration: 2000
         })
-        row.status = 'Released'
+        row.availableReplicas = 0
+        row.status = 'Free'
       })
     },
     handleFetchPv(pv) {
@@ -413,6 +418,18 @@ export default {
       }
       this.list.unshift(body)
     },
+    formatRequest(temp) {
+      const requestBody = Object.assign({}, temp)
+      requestBody.cpuLimits *= 1000
+      // 资源request默认与limit相同
+      requestBody.cpuRequests = requestBody.cpuLimits
+      requestBody.memRequests = requestBody.memLimits
+      // 显卡数量大于1时, 只能使用整数
+      requestBody.gpuCountLimits = temp.gpuCountLimits > 1 ? Math.floor(temp.gpuCountLimits) : temp.gpuCountLimits
+      requestBody.gpuCountLimits *= 100
+      requestBody.gpuMemLimits = temp.gpuMemLimits * 4
+      return requestBody
+    },
     cpuFormatter(row, column) {
       return (row.cpuLimits / 1000) + '核'
     },
@@ -423,14 +440,14 @@ export default {
     gpuCountFormatter(row, column) {
       const requests = row.gpuCountLimits
       if (requests > 0) {
-        return requests + '块'
+        return requests / 100 + '块'
       }
       return '-'
     },
     gpuMemFormatter(row, column) {
       const requests = row.gpuMemLimits
       if (requests > 0) {
-        return requests + 'G'
+        return requests / 4 + 'G'
       }
       return '-'
     }

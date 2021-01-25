@@ -25,10 +25,10 @@
     >
       <el-table-column prop="organizationName" label="组织" width="160px" />
       <el-table-column prop="applyUserNickname" label="申请人" width="120px" align="center" />
-      <el-table-column prop="cpuLimits" label="CPU" width="80px" align="center" :formatter="cpuLimitsFormatter" />
-      <el-table-column prop="memLimits" label="内存" width="80px" align="center" :formatter="memLimitsFormatter" />
-      <el-table-column prop="gpuCountLimits" label="GPU" width="80px" align="center" />
-      <el-table-column prop="gpuMemLimits" label="显存" width="80px" align="center" :formatter="gpuMemLimitsFormatter" />
+      <el-table-column prop="cpuLimits" label="CPU" width="80px" align="center" :formatter="cpuFormatter" />
+      <el-table-column prop="memLimits" label="内存" width="80px" align="center" :formatter="memFormatter" />
+      <el-table-column prop="gpuCountLimits" label="GPU" width="80px" align="center" :formatter="gpuCountFormatter" />
+      <el-table-column prop="gpuMemLimits" label="显存" width="80px" align="center" :formatter="gpuMemFormatter" />
       <el-table-column prop="remark" label="原因" />
       <el-table-column label="状态" width="80" align="center">
         <template slot-scope="{row}">
@@ -168,16 +168,26 @@ export default {
         })
       })
     },
-    cpuLimitsFormatter(row, column) {
-      return (row.cpuLimits / 1000).toFixed(3)
+    cpuFormatter(row, column) {
+      return (row.cpuLimits / 1000) + '核'
     },
-    memLimitsFormatter(row, column) {
+    memFormatter(row, column) {
       const requests = row.memLimits
       return requests + 'M'
     },
-    gpuMemLimitsFormatter(row, column) {
+    gpuCountFormatter(row, column) {
+      const requests = row.gpuCountLimits
+      if (requests > 0) {
+        return requests / 100 + '块'
+      }
+      return '-'
+    },
+    gpuMemFormatter(row, column) {
       const requests = row.gpuMemLimits
-      return requests + 'G'
+      if (requests > 0) {
+        return requests / 4 + 'G'
+      }
+      return '-'
     }
   }
 }

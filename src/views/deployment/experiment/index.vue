@@ -3,7 +3,7 @@
     <div class="filter-container">
       <el-input v-if="checkPermission(['SYS_ADMIN'])" v-model="listQuery.organizationName" placeholder="组织" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.displayName" placeholder="名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.description" placeholder="描述" style="width: 200px;" class="filter-item" />
+      <el-input v-model="listQuery.description" placeholder="描述" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         查询
       </el-button>
@@ -19,7 +19,13 @@
       @sort-change="sortChange"
     >
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="organizationName" label="组织" width="160px" />
-      <el-table-column prop="displayName" label="名称" min-width="120px" />
+      <el-table-column label="名称" min-width="120px">
+        <template slot-scope="{row}">
+          <span>{{ row.displayName }}</span>
+          <a v-if="row.status=='Running'" :href="'//kube-manager.ingress/' + row.ttydMd5 + '/'" target="_blank" class="link-type"> 终端</a>
+          <a v-if="row.status=='Running' && row.webMd5" :href="'//kube-manager.ingress/' + row.webMd5 + '/'" target="_blank" class="link-type"> 网页</a>
+        </template>
+      </el-table-column>
       <el-table-column prop="description" label="描述" min-width="200px" />
       <el-table-column prop="startTime" label="启动时间" min-width="150px" align="center" />
       <el-table-column label="状态" width="80" align="center">
@@ -29,17 +35,14 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
           <el-button v-if="row.status=='Free'" type="primary" size="mini" @click="handleStart(row)">
             启动
           </el-button>
-          <el-button v-if="row.status=='Running'" type="primary" size="mini" @click="handleLaunch(row)">
-            进入
-          </el-button>
-          <el-button v-if="row.status!='Free'" type="warning" size="mini" @click="handleRestart(row)">
+          <!-- <el-button v-if="row.status!='Free'" type="warning" size="mini" @click="handleRestart(row)">
             重启
-          </el-button>
+          </el-button> -->
           <el-button v-if="row.status!='Free'" type="danger" size="mini" @click="handleShutdown(row)">
             停止
           </el-button>
@@ -60,7 +63,7 @@ import { checkPermission } from '@/utils/auth.js'
 const statusOptions = [
   { key: 'Running', display_name: '运行中' },
   { key: 'Starting', display_name: '启动中' },
-  { key: 'Pending', display_name: '阻塞' },
+  { key: 'Pending', display_name: '等待中' },
   { key: 'Error', display_name: '失败' },
   { key: 'Free', display_name: '未运行' }
 ]
@@ -205,14 +208,14 @@ export default {
     gpuCountFormatter(row, column) {
       const requests = row.gpuCountLimits
       if (requests > 0) {
-        return requests + '块'
+        return requests / 100 + '块'
       }
       return '-'
     },
     gpuMemFormatter(row, column) {
       const requests = row.gpuMemLimits
       if (requests > 0) {
-        return requests + 'G'
+        return requests / 4 + 'G'
       }
       return '-'
     }

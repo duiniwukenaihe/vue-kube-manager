@@ -1,10 +1,17 @@
 <template>
   <div class="app-container">
     <el-form ref="form" :model="apply" label-position="left" label-width="120px" style="padding: 30px;">
+      <p class="current-prompt">
+        <span>当前配额: </span>
+        <span>{{ current.cpuLimits }}核CPU, </span>
+        <span>{{ current.memLimits }}M内存, </span>
+        <span>{{ current.gpuCountLimits }}GPU, </span>
+        <span>{{ current.gpuMemLimits }}G显存</span>
+      </p>
       <el-form-item label="CPU核心数">
         <el-input-number v-model="apply.cpuLimits" :min="0" :max="64" :precision="3" :step="0.1" placeholder="请输入" />
         <el-tag :type="apply.cpuLimits | diffStyleFilter(current.cpuLimits)">
-          {{ apply.cpuLimits | diffDecimalTextFilter(current.cpuLimits) }}
+          {{ apply.cpuLimits | diffDecimalTextFilter(current.cpuLimits, 3) }}
         </el-tag>
       </el-form-item>
       <el-form-item label="内存（M）">
@@ -14,13 +21,13 @@
         </el-tag>
       </el-form-item>
       <el-form-item label="GPU数量">
-        <el-input-number v-model="apply.gpuCountLimits" :min="0" :max="10" />
+        <el-input-number v-model="apply.gpuCountLimits" :min="0" :max="8" :precision="2" :step="0.1" />
         <el-tag :type="apply.gpuCountLimits | diffStyleFilter(current.gpuCountLimits)">
-          {{ apply.gpuCountLimits | diffTextFilter(current.gpuCountLimits) }}
+          {{ apply.gpuCountLimits | diffDecimalTextFilter(current.gpuCountLimits, 2) }}
         </el-tag>
       </el-form-item>
       <el-form-item label="显存（G）">
-        <el-input-number v-model="apply.gpuMemLimits" :min="0" :max="40" />
+        <el-input-number v-model="apply.gpuMemLimits" :min="0" :max="320" :step="0.25" />
         <el-tag :type="apply.gpuMemLimits | diffStyleFilter(current.gpuMemLimits)">
           {{ apply.gpuMemLimits | diffTextFilter(current.gpuMemLimits) }}
         </el-tag>
@@ -61,9 +68,9 @@ export default {
       }
       return prefix + diff
     },
-    diffDecimalTextFilter(apply, current) {
+    diffDecimalTextFilter(apply, current, precision) {
       if (!apply || !current || apply === current) {
-        return '+ 0.000'
+        return '+ 0'
       }
       let diff = apply - current
       let prefix = '+ '
@@ -71,24 +78,18 @@ export default {
         prefix = '- '
         diff = -diff
       }
-      return prefix + diff.toFixed(3)
+      return prefix + diff.toFixed(precision)
     }
   },
   data() {
     return {
       current: {
-        cpuLimits: 1.000,
-        memLimits: 1024,
-        gpuCountLimits: 1,
-        gpuMemLimits: 1
+        cpuLimits: '-',
+        memLimits: '-',
+        gpuCountLimits: '-',
+        gpuMemLimits: '-'
       },
-      apply: {
-        id: '',
-        cpuLimits: 1.000,
-        memLimits: 1024,
-        gpuCountLimits: 1,
-        gpuMemLimits: 1
-      }
+      apply: {}
     }
   },
   mounted() {
@@ -101,6 +102,8 @@ export default {
         const data = response.result
         this.current = data
         data.cpuLimits /= 1000
+        data.gpuCountLimits /= 100
+        data.gpuMemLimits /= 4
 
         this.apply.cpuLimits = data.cpuLimits
         this.apply.memLimits = data.memLimits
@@ -113,6 +116,8 @@ export default {
         if (response.total !== 0) {
           this.apply = response.result[0]
           this.apply.cpuLimits /= 1000
+          this.apply.gpuCountLimits /= 100
+          this.apply.gpuMemLimits /= 4
         }
       })
     },
@@ -132,6 +137,8 @@ export default {
             return false
           }
           requestBody.cpuLimits *= 1000
+          requestBody.gpuCountLimits *= 100
+          requestBody.gpuMemLimits *= 4
           sumbitApplication(requestBody).then(response => {
             this.$notify({
               title: '成功',
@@ -171,6 +178,9 @@ export default {
   border: none;
   background: none;
   font-size: inherit;
+}
+.current-prompt {
+  color: #909399;
 }
 </style>
 

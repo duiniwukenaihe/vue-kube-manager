@@ -10,7 +10,7 @@
       <div class="bullshit">
         <div class="bullshit__oops">OOPS!</div>
         <div class="bullshit__info">All rights reserved
-          <a style="color:#20a0ff" href="http://kube-manager.com/" target="_blank">上海一勤信息技术有限公司</a>
+          <a style="color:#20a0ff" href="http://kube-manager.com/" target="_blank">Kube Manager</a>
         </div>
         <div class="bullshit__headline">{{ message }}</div>
         <div class="bullshit__info">请检查您输入的链接是否正确，或者点击下面的按钮返回首页。</div>

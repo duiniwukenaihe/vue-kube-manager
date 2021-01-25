@@ -53,23 +53,6 @@ export const constantRoutes = [
       component: () => import('@/views/dashboard/index'),
       meta: { title: '资源仪表盘', icon: 'dashboard' }
     }]
-  },
-
-  {
-    path: '/currency',
-    component: Layout,
-    children: [{
-      path: 'index',
-      name: 'Currency',
-      component: () => import('@/views/currency/index'),
-      meta: {
-        title: '通用查询',
-        icon: 'table',
-        config: '/api/currency/config/LIST_USER',
-        data: '/api/currency/data/LIST_USER',
-        dataMethod: 'post'
-      }
-    }]
   }
 ]
 
@@ -135,7 +118,7 @@ export const asyncRoutes = [
     path: '/resource',
     component: Layout,
     meta: {
-      title: '计算资源',
+      title: '资源配额',
       icon: 'cpu'
     },
     redirect: '/resource/application',
@@ -145,8 +128,7 @@ export const asyncRoutes = [
         name: 'Application',
         component: () => import('@/views/resource/application/index'),
         meta: {
-          roles: ['ORG_ADMIN', 'ORG_USER'],
-          title: '资源申请',
+          title: '配额申请',
           icon: 'form'
         }
       },
@@ -156,7 +138,7 @@ export const asyncRoutes = [
         component: () => import('@/views/resource/approve/index'),
         meta: {
           roles: ['SYS_ADMIN', 'ORG_ADMIN'],
-          title: '资源审批',
+          title: '配额审批',
           icon: 'form'
         }
       }
@@ -168,7 +150,7 @@ export const asyncRoutes = [
     component: Layout,
     redirect: '/example/table',
     name: 'Example',
-    meta: { title: '镜像管理', icon: 'docker' },
+    meta: { roles: ['DEV'], title: '镜像管理', icon: 'docker' },
     children: [
       {
         path: 'table',
@@ -191,6 +173,7 @@ export const asyncRoutes = [
     redirect: '/nested/menu1',
     name: 'Nested',
     meta: {
+      roles: ['DEV'],
       title: '文件管理',
       icon: 'nested'
     },
@@ -241,6 +224,24 @@ export const asyncRoutes = [
         meta: { title: 'menu2' }
       }
     ]
+  },
+
+  {
+    path: '/currency',
+    component: Layout,
+    children: [{
+      path: 'index',
+      name: 'Currency',
+      component: () => import('@/views/currency/index'),
+      meta: {
+        title: '通用查询',
+        roles: ['DEV'],
+        icon: 'table',
+        config: '/api/currency/config/LIST_USER',
+        data: '/api/currency/data/LIST_USER',
+        dataMethod: 'post'
+      }
+    }]
   },
 
   {
