@@ -1,10 +1,17 @@
 <template>
   <div class="app-container">
     <el-form ref="form" :model="apply" label-position="left" label-width="120px" style="padding: 30px;">
+      <p class="current-prompt">
+        <span>当前配额: </span>
+        <span>{{ current.cpuLimits }}核CPU, </span>
+        <span>{{ current.memLimits }}M内存, </span>
+        <span>{{ current.gpuCountLimits }}GPU, </span>
+        <span>{{ current.gpuMemLimits }}G显存</span>
+      </p>
       <el-form-item label="CPU核心数">
-        <el-input-number v-model="apply.cpuLimits" :min="0" :max="64" :precision="3" :step="0.1" placeholder="请输入" :formatter="cpuFormatter" />
+        <el-input-number v-model="apply.cpuLimits" :min="0" :max="64" :precision="3" :step="0.1" placeholder="请输入" />
         <el-tag :type="apply.cpuLimits | diffStyleFilter(current.cpuLimits)">
-          {{ apply.cpuLimits | diffDecimalTextFilter(current.cpuLimits) }}
+          {{ apply.cpuLimits | diffDecimalTextFilter(current.cpuLimits, 3) }}
         </el-tag>
       </el-form-item>
       <el-form-item label="内存（M）">
@@ -16,7 +23,7 @@
       <el-form-item label="GPU数量">
         <el-input-number v-model="apply.gpuCountLimits" :min="0" :max="8" :precision="2" :step="0.1" />
         <el-tag :type="apply.gpuCountLimits | diffStyleFilter(current.gpuCountLimits)">
-          {{ apply.gpuCountLimits | diffTextFilter(current.gpuCountLimits) }}
+          {{ apply.gpuCountLimits | diffDecimalTextFilter(current.gpuCountLimits, 2) }}
         </el-tag>
       </el-form-item>
       <el-form-item label="显存（G）">
@@ -61,9 +68,9 @@ export default {
       }
       return prefix + diff
     },
-    diffDecimalTextFilter(apply, current) {
+    diffDecimalTextFilter(apply, current, precision) {
       if (!apply || !current || apply === current) {
-        return '+ 0.000'
+        return '+ 0'
       }
       let diff = apply - current
       let prefix = '+ '
@@ -71,7 +78,7 @@ export default {
         prefix = '- '
         diff = -diff
       }
-      return prefix + diff.toFixed(3)
+      return prefix + diff.toFixed(precision)
     }
   },
   data() {
@@ -177,6 +184,9 @@ export default {
   border: none;
   background: none;
   font-size: inherit;
+}
+.current-prompt {
+  color: #909399;
 }
 </style>
 
