@@ -128,7 +128,6 @@ export const asyncRoutes = [
         name: 'Application',
         component: () => import('@/views/resource/application/index'),
         meta: {
-          roles: ['ORG_ADMIN', 'ORG_USER'],
           title: '配额申请',
           icon: 'form'
         }

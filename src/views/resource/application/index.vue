@@ -84,18 +84,12 @@ export default {
   data() {
     return {
       current: {
-        cpuLimits: 1.000,
-        memLimits: 1024,
-        gpuCountLimits: 1,
-        gpuMemLimits: 1
+        cpuLimits: '-',
+        memLimits: '-',
+        gpuCountLimits: '-',
+        gpuMemLimits: '-'
       },
-      apply: {
-        id: '',
-        cpuLimits: 1.000,
-        memLimits: 1024,
-        gpuCountLimits: 1,
-        gpuMemLimits: 1
-      }
+      apply: {}
     }
   },
   mounted() {

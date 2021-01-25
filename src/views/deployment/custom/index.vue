@@ -42,6 +42,7 @@
         </template>
       </el-table-column>
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="namespace" label="命名空间" min-width="100px" align="center" />
+      <el-table-column v-if="checkPermission(['ORG_ADMIN'])" prop="labels.created-by" label="创建人" min-width="100px" align="center" />
       <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuFormatter" />
       <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memFormatter" />
       <el-table-column prop="gpuCountLimits" label="GPU" min-width="80px" align="center" :formatter="gpuCountFormatter" />
@@ -92,7 +93,7 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item v-if="dialogStatus==='create'" label="名称" prop="name">
-          <el-input v-model="temp.name" />
+          <el-input v-model="temp.name" placeholder="建议全小写字母加数字" />
         </el-form-item>
         <el-form-item v-permission="['SYS_ADMIN']" label="命名空间" prop="namespace">
           <el-input v-model="temp.namespace" />
@@ -103,7 +104,7 @@
           </el-select>
         </el-form-item> -->
         <el-form-item v-if="dialogStatus==='create'" label="镜像" prop="image">
-          <el-input v-model="temp.image" />
+          <el-input v-model="temp.image" placeholder="例: postgres:9.6.20-alpine" />
         </el-form-item>
         <el-form-item label="CPU核心数" prop="cpuLimits">
           <el-input-number v-model="temp.cpuLimits" :min="0" :max="64" :precision="3" :step="0.1" />
@@ -225,8 +226,8 @@ export default {
       temp: {
         uid: '',
         name: '',
-        namespace: 'ns100009',
-        image: 'tensorflow:2.0.3-gpu-jupyter',
+        namespace: '',
+        image: '',
         cpuLimits: 0.5,
         cpuRequests: 0.5,
         memLimits: 500,
@@ -245,8 +246,7 @@ export default {
       pvData: [],
       rules: {
         name: [{ required: true, message: '名称不得为空', trigger: 'blur' }],
-        namespace: [{ required: true, message: '命名空间不得为空', trigger: 'blur' }],
-        image: [{ required: true, message: '镜像不得为空', trigger: 'change' }]
+        image: [{ required: true, message: '镜像不得为空', trigger: 'blur' }]
       },
       downloadLoading: false
     }
@@ -289,8 +289,8 @@ export default {
     resetTemp() {
       this.temp = {
         name: '',
-        namespace: 'ns100009',
-        image: 'tensorflow:2.0.3-gpu-jupyter',
+        namespace: '',
+        image: '',
         cpuLimits: 0.5,
         memLimits: 500,
         gpuCountLimits: 0,
