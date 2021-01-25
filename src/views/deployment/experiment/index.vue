@@ -63,7 +63,7 @@ import { checkPermission } from '@/utils/auth.js'
 const statusOptions = [
   { key: 'Running', display_name: '运行中' },
   { key: 'Starting', display_name: '启动中' },
-  { key: 'Pending', display_name: '阻塞' },
+  { key: 'Pending', display_name: '等待中' },
   { key: 'Error', display_name: '失败' },
   { key: 'Free', display_name: '未运行' }
 ]

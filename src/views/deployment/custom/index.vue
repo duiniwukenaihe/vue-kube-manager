@@ -341,6 +341,8 @@ export default {
           const requestBody = this.formatRequest(this.temp)
           updateDeployment(requestBody).then(() => {
             const index = this.list.findIndex(v => v.uid === this.temp.uid)
+            requestBody.availableReplicas = 0
+            requestBody.status = 'Pending'
             this.list.splice(index, 1, requestBody)
             this.dialogFormVisible = false
             this.$notify({
@@ -387,6 +389,7 @@ export default {
           type: 'success',
           duration: 2000
         })
+        row.availableReplicas = 0
         row.status = 'Free'
       })
     },
