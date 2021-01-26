@@ -93,7 +93,7 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item v-if="dialogStatus==='create'" label="名称" prop="name">
-          <el-input v-model="temp.name" placeholder="建议全小写字母加数字" />
+          <el-input v-model="temp.name" placeholder="例: centos8-02" @input="e => temp.name = nameVaildate(e)" />
         </el-form-item>
         <el-form-item v-permission="['SYS_ADMIN']" label="命名空间" prop="namespace">
           <el-input v-model="temp.namespace" />
@@ -398,6 +398,20 @@ export default {
         this.pvData = response.data.pvData
         this.dialogPvVisible = true
       })
+    },
+    nameVaildate(value) {
+      const arr = value.split('')
+      let firstLetterIndex = arr.length
+      for (let i = 0; i < arr.length; i++) {
+        if (arr[i] >= 'a' && arr[i] <= 'z') {
+          firstLetterIndex = i
+          break
+        }
+      }
+      value = value.substr(firstLetterIndex, arr.length)
+      value = value.replace(/[\u4e00-\u9fa5/\s+/]|[`~!@#$%^&*()_+=<>?:"{}|,./;'\\[\]·！￥……（）——《》？：“”【】、；‘’，。、]/g, '')
+        .replace(/\s/g, '')
+      return value
     },
     formatJson(filterVal) {
       return this.list.map(v => filterVal.map(j => {

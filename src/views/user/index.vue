@@ -61,7 +61,7 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item v-if="dialogStatus==='create'" label="用户名" prop="username">
-          <el-input v-model="temp.username" />
+          <el-input v-model="temp.username" @input="e => temp.username = usernameVaildate(e)" />
         </el-form-item>
         <el-form-item label="名字" prop="name">
           <el-input v-model="temp.name" />
@@ -283,6 +283,20 @@ export default {
           duration: 2000
         })
       })
+    },
+    usernameVaildate(value) {
+      const arr = value.split('')
+      let firstLetterIndex = arr.length
+      for (let i = 0; i < arr.length; i++) {
+        if (arr[i] >= 'a' && arr[i] <= 'z') {
+          firstLetterIndex = i
+          break
+        }
+      }
+      value = value.substr(firstLetterIndex, arr.length)
+      value = value.replace(/[\u4e00-\u9fa5/\s+/]|[`~!@#$%^&*()_\-+=<>?:"{}|,./;'\\[\]·~！￥……（）——《》？：“”【】、；‘’，。、]/g, '')
+        .replace(/\s/g, '')
+      return value
     },
     formatRequest(temp) {
       const requestBody = Object.assign({}, temp)
