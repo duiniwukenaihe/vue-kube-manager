@@ -37,8 +37,8 @@
           <el-tag v-if="row.resourceType=='GPU'" type="success">
             GPU
           </el-tag>
-          <a v-if="row.status=='Running'" :href="'//kube-manager.ingress/' + row.ttydMd5 + '/'" target="_blank" class="link-type"> 终端</a>
-          <a v-if="row.status=='Running' && row.webMd5" :href="'//kube-manager.ingress/' + row.webMd5 + '/'" target="_blank" class="link-type"> 网页</a>
+          <a v-if="row.status=='Running' && row.webSshMd5" :href="'//kube-manager.ingress/' + row.webSshMd5 + '/'" target="_blank" class="link-type"> 终端</a>
+          <a v-if="row.status=='Running' && row.webAppMd5" :href="'//kube-manager.ingress/' + row.webAppMd5 + '/'" target="_blank" class="link-type"> 网页</a>
         </template>
       </el-table-column>
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="namespace" label="命名空间" min-width="100px" align="center" />

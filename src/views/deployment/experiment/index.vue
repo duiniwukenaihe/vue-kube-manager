@@ -22,8 +22,8 @@
       <el-table-column label="名称" min-width="120px">
         <template slot-scope="{row}">
           <span>{{ row.displayName }}</span>
-          <a v-if="row.status=='Running'" :href="'//kube-manager.ingress/' + row.ttydMd5 + '/'" target="_blank" class="link-type"> 终端</a>
-          <a v-if="row.status=='Running' && row.webMd5" :href="'//kube-manager.ingress/' + row.webMd5 + '/'" target="_blank" class="link-type"> 网页</a>
+          <a v-if="row.status=='Running' && row.webSshMd5" :href="'//kube-manager.ingress/' + row.webSshMd5 + '/'" target="_blank" class="link-type"> 终端</a>
+          <a v-if="row.status=='Running' && row.webAppMd5" :href="'//kube-manager.ingress/' + row.webAppMd5 + '/'" target="_blank" class="link-type"> 网页</a>
         </template>
       </el-table-column>
       <el-table-column prop="description" label="描述" min-width="200px" />

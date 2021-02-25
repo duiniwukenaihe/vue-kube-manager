@@ -53,8 +53,8 @@
         <el-form-item label="描述" prop="displayName">
           <el-input v-model="temp.description" />
         </el-form-item>
-        <el-form-item label="镜像" prop="imageId">
-          <el-input v-model="temp.imageId" />
+        <el-form-item label="镜像" prop="image">
+          <el-input v-model="temp.image" />
         </el-form-item>
         <el-form-item label="CPU核心数" prop="cpuLimits">
           <el-input-number v-model="temp.cpuLimits" :formatter="cpuFormatter" :min="0" :max="64" :precision="3" :step="0.1" />
