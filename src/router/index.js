@@ -63,6 +63,7 @@ export const constantRoutes = [
 export const asyncRoutes = [
   {
     path: '/deployment',
+    name: 'Deployment',
     component: Layout,
     meta: {
       title: '应用管理',
@@ -72,7 +73,7 @@ export const asyncRoutes = [
     children: [
       {
         path: 'custom',
-        name: 'Deployment',
+        name: 'Custom',
         component: () => import('@/views/deployment/custom/index'),
         meta: { title: '自建应用', icon: 'custom' }
       },
@@ -146,23 +147,32 @@ export const asyncRoutes = [
   },
 
   {
-    path: '/example',
+    path: '/image',
     component: Layout,
-    redirect: '/example/table',
-    name: 'Example',
-    meta: { roles: ['DEV'], title: '镜像管理', icon: 'docker' },
+    redirect: '/image/index',
+    meta: { roles: ['SYS_ADMIN', 'ORG_ADMIN'], title: '镜像管理', icon: 'docker' },
     children: [
+      {
+        path: 'index',
+        component: () => import('@/views/image/index'),
+        name: 'Image',
+        meta: {
+          roles: ['SYS_ADMIN', 'ORG_ADMIN'],
+          title: '镜像管理',
+          icon: 'docker'
+        }
+      },
       {
         path: 'table',
         name: 'Table',
         component: () => import('@/views/table/index'),
-        meta: { title: 'Table', icon: 'table' }
+        meta: { roles: ['DEV'], title: 'Table', icon: 'table' }
       },
       {
         path: 'tree',
         name: 'Tree',
         component: () => import('@/views/tree/index'),
-        meta: { title: 'Tree', icon: 'tree' }
+        meta: { roles: ['DEV'], title: 'Tree', icon: 'tree' }
       }
     ]
   },
