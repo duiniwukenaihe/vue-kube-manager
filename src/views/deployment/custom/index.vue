@@ -34,9 +34,6 @@
       <el-table-column label="应用名称" min-width="150px">
         <template slot-scope="{row}">
           <span>{{ row.name }}</span>
-          <el-tag v-if="row.resourceType=='GPU'" type="success">
-            GPU
-          </el-tag>
           <a v-if="row.status=='Running' && row.webSshMd5" :href="'//kube-manager.ingress/' + row.webSshMd5 + '/'" target="_blank" class="link-type"> 终端</a>
           <a v-if="row.status=='Running' && row.webAppMd5" :href="'//kube-manager.ingress/' + row.webAppMd5 + '/'" target="_blank" class="link-type"> 网页</a>
         </template>
@@ -90,8 +87,8 @@
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="800px">
+      <el-form id="dataForm" ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px">
         <el-form-item label="名称" prop="name">
           <el-input v-model="temp.name" :disabled="dialogStatus==='update'" placeholder="例: centos8-02" @input="e => temp.name = nameVaildate(e)" />
         </el-form-item>
@@ -99,7 +96,7 @@
           <el-input v-model="temp.namespace" :disabled="true" />
         </el-form-item>
         <el-form-item v-if="dialogStatus==='create'" label="镜像" prop="image">
-          <el-select v-model="temp.image" class="filter-item" filterable placeholder="请选择镜像">
+          <el-select v-model="temp.image" filterable placeholder="请选择镜像" class="form-select">
             <el-option v-for="item in imageOptions" :key="item" :label="item" :value="item" />
           </el-select>
         </el-form-item>
@@ -137,7 +134,7 @@
         <el-table-column prop="enableWebSsh" label="WebSSH">
           <template slot-scope="{row}">
             <el-tag v-if="row.enableWebSsh" type="success">启用</el-tag>
-            <el-tag v-if="!row.enableWebSsh" type="danger">禁用</el-tag>
+            <el-tag v-if="!row.enableWebSsh" type="info">禁用</el-tag>
           </template>
         </el-table-column>/>
         <el-table-column prop="webPort" label="Web应用端口" :formatter="emptyFormatter" />
@@ -219,15 +216,7 @@ export default {
         sort: '-creationTimestamp'
       },
       statusOptions,
-      imageOptions: [
-        'tensorflow:2.0.3-gpu-jupyter',
-        'jupyter-notebook:r-4.0.3',
-        'terminal:1.6.1',
-        'httpd:2.4.46',
-        'ubuntu-desktop-lxde:focal',
-        'centos:7',
-        'nvidia/cuda-dli:v1'
-      ],
+      imageOptions: [],
       replicasOptions: [1, 2, 3],
       sortOptions: [{ label: '时间升序', key: '+creationTimestamp' }, { label: '时间降序', key: '-creationTimestamp' }],
       temp: {
@@ -487,3 +476,13 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+#dataForm {
+ margin-left: 50px;
+ width: 460px;
+}
+.form-select {
+  width: 100%;
+}
+</style>
