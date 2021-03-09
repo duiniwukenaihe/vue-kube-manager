@@ -26,7 +26,7 @@
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="organizationName" label="组织" width="160px" />
       <el-table-column prop="displayName" label="实验名称" min-width="120px" />
       <el-table-column prop="description" label="描述" min-width="200px" />
-      <el-table-column prop="image" label="镜像" min-width="200px" />
+      <el-table-column prop="repoTag" label="镜像" min-width="200px" />
       <el-table-column prop="cpuLimits" label="CPU" min-width="80px" align="center" :formatter="cpuFormatter" />
       <el-table-column prop="memLimits" label="内存" min-width="80px" align="center" :formatter="memFormatter" />
       <el-table-column prop="gpuCountLimits" label="GPU" min-width="80px" align="center" :formatter="gpuCountFormatter" />
@@ -45,16 +45,18 @@
     </el-table>
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="800px">
+      <el-form id="dataForm" ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px">
         <el-form-item label="实验名称" prop="displayName">
           <el-input v-model="temp.displayName" />
         </el-form-item>
         <el-form-item label="描述" prop="displayName">
           <el-input v-model="temp.description" />
         </el-form-item>
-        <el-form-item label="镜像" prop="imageId">
-          <el-input v-model="temp.imageId" />
+        <el-form-item v-if="dialogStatus==='create'" label="镜像" prop="imageId">
+          <el-select v-model="temp.imageId" class="form-select" filterable placeholder="请选择镜像">
+            <el-option v-for="image in imageOptions" :key="image.id" :label="image.repoTag" :value="image.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="CPU核心数" prop="cpuLimits">
           <el-input-number v-model="temp.cpuLimits" :formatter="cpuFormatter" :min="0" :max="64" :precision="3" :step="0.1" />
@@ -85,6 +87,7 @@
 import waves from '@/directive/waves' // waves directive
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import { listTemplate, createTemplate, updateTemplate, deleteTemplate } from '@/api/experiment'
+import { listImage } from '@/api/image'
 import permission from '@/directive/permission/index.js'
 import { checkPermission } from '@/utils/auth.js'
 
@@ -129,6 +132,7 @@ export default {
       },
       statusOptions,
       sortOptions: [{ label: '时间升序', key: '+createTime' }, { label: '时间降序', key: '-createTime' }],
+      imageOptions: [],
       temp: {
         id: '',
         dispalyName: '',
@@ -145,13 +149,13 @@ export default {
         create: '新建'
       },
       rules: {
-
       },
       downloadLoading: false
     }
   },
   created() {
     this.getList()
+    this.getImageOptions()
   },
   methods: {
     checkPermission,
@@ -165,6 +169,11 @@ export default {
         setTimeout(() => {
           this.listLoading = false
         }, 0.5 * 1000)
+      })
+    },
+    getImageOptions() {
+      listImage().then(response => {
+        this.imageOptions = response.result
       })
     },
     handleFilter() {
@@ -189,7 +198,7 @@ export default {
       this.temp = {
         dispalyName: '',
         description: '',
-        image: 100002,
+        image: '',
         cpuLimits: 0.5,
         memLimits: 500,
         gpuCountLimits: 0,
@@ -298,3 +307,13 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+#dataForm {
+ margin-left: 50px;
+ width: 460px;
+}
+.form-select {
+  width: 100%;
+}
+</style>

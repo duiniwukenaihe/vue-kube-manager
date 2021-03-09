@@ -34,11 +34,8 @@
       <el-table-column label="应用名称" min-width="150px">
         <template slot-scope="{row}">
           <span>{{ row.name }}</span>
-          <el-tag v-if="row.resourceType=='GPU'" type="success">
-            GPU
-          </el-tag>
-          <a v-if="row.status=='Running'" :href="'//kube-manager.ingress/' + row.ttydMd5 + '/'" target="_blank" class="link-type"> 终端</a>
-          <a v-if="row.status=='Running' && row.webMd5" :href="'//kube-manager.ingress/' + row.webMd5 + '/'" target="_blank" class="link-type"> 网页</a>
+          <a v-if="row.status=='Running' && row.webSshMd5" :href="'//kube-manager.ingress/' + row.webSshMd5 + '/'" target="_blank" class="link-type"> 终端</a>
+          <a v-if="row.status=='Running' && row.webAppMd5" :href="'//kube-manager.ingress/' + row.webAppMd5 + '/'" target="_blank" class="link-type"> 网页</a>
         </template>
       </el-table-column>
       <el-table-column v-if="checkPermission(['SYS_ADMIN'])" prop="namespace" label="命名空间" min-width="100px" align="center" />
@@ -49,7 +46,7 @@
       <el-table-column prop="gpuMemLimits" label="显存" min-width="80px" align="center" :formatter="gpuMemFormatter" />
       <el-table-column label="镜像" min-width="220px">
         <template slot-scope="{row}">
-          <span v-if="row.image" class="link-type" @click="handleFetchPv(row.image)">{{ row.image }}</span>
+          <span v-if="row.image" class="link-type" @click="handleFetchImageInfo(row.image)">{{ row.image }}</span>
           <span v-else>0</span>
         </template>
       </el-table-column>
@@ -90,21 +87,21 @@
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
-        <el-form-item v-if="dialogStatus==='create'" label="名称" prop="name">
-          <el-input v-model="temp.name" placeholder="建议全小写字母加数字" />
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="800px">
+      <el-form id="dataForm" ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px">
+        <el-form-item label="名称" prop="name">
+          <el-input v-model="temp.name" :disabled="dialogStatus==='update'" placeholder="例: centos8-02" @input="e => temp.name = nameVaildate(e)" />
         </el-form-item>
         <el-form-item v-permission="['SYS_ADMIN']" label="命名空间" prop="namespace">
-          <el-input v-model="temp.namespace" />
+          <el-input v-model="temp.namespace" :disabled="true" />
         </el-form-item>
-        <!-- <el-form-item label="镜像" prop="image">
-          <el-select v-model="temp.image" class="filter-item" placeholder="请选择镜像">
+        <el-form-item v-if="dialogStatus==='create'" label="镜像" prop="image">
+          <el-select v-model="temp.image" filterable placeholder="请选择镜像" class="form-select">
             <el-option v-for="item in imageOptions" :key="item" :label="item" :value="item" />
           </el-select>
-        </el-form-item> -->
-        <el-form-item v-if="dialogStatus==='create'" label="镜像" prop="image">
-          <el-input v-model="temp.image" placeholder="例: postgres:9.6.20-alpine" />
+        </el-form-item>
+        <el-form-item v-if="dialogStatus==='update'" label="镜像" prop="image">
+          <el-input v-model="temp.image" :disabled="true" />
         </el-form-item>
         <el-form-item label="CPU核心数" prop="cpuLimits">
           <el-input-number v-model="temp.cpuLimits" :min="0" :max="64" :precision="3" :step="0.1" />
@@ -133,9 +130,15 @@
     </el-dialog>
 
     <el-dialog :visible.sync="dialogPvVisible" title="镜像信息">
-      <el-table :data="pvData" border fit highlight-current-row style="width: 100%">
-        <el-table-column prop="key" label="待开发" />
-        <el-table-column prop="pv" label="待开发" />
+      <el-table :data="imageInfo" border fit highlight-current-row style="width: 100%">
+        <el-table-column prop="enableWebSsh" label="WebSSH">
+          <template slot-scope="{row}">
+            <el-tag v-if="row.enableWebSsh" type="success">启用</el-tag>
+            <el-tag v-if="!row.enableWebSsh" type="info">禁用</el-tag>
+          </template>
+        </el-table-column>/>
+        <el-table-column prop="webPort" label="Web应用端口" :formatter="emptyFormatter" />
+        <el-table-column prop="size" label="大小" :formatter="emptyFormatter" />
       </el-table>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="dialogPvVisible = false">确认</el-button>
@@ -145,7 +148,8 @@
 </template>
 
 <script>
-import { listDeployment, createDeployment, deleteDeployment, updateDeployment, scaleDeployment, fetchPv } from '@/api/deployment'
+import { listDeployment, createDeployment, deleteDeployment, updateDeployment, scaleDeployment } from '@/api/deployment'
+import { listImage, getImageByName } from '@/api/image'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
@@ -212,15 +216,7 @@ export default {
         sort: '-creationTimestamp'
       },
       statusOptions,
-      imageOptions: [
-        'tensorflow:2.0.3-gpu-jupyter',
-        'jupyter-notebook:r-4.0.3',
-        'terminal:1.6.1',
-        'httpd:2.4.46',
-        'ubuntu-desktop-lxde:focal',
-        'centos:7',
-        'nvidia/cuda-dli:v1'
-      ],
+      imageOptions: [],
       replicasOptions: [1, 2, 3],
       sortOptions: [{ label: '时间升序', key: '+creationTimestamp' }, { label: '时间降序', key: '-creationTimestamp' }],
       temp: {
@@ -243,7 +239,7 @@ export default {
         create: '新建'
       },
       dialogPvVisible: false,
-      pvData: [],
+      imageInfo: [],
       rules: {
         name: [{ required: true, message: '名称不得为空', trigger: 'blur' }],
         image: [{ required: true, message: '镜像不得为空', trigger: 'blur' }]
@@ -253,6 +249,7 @@ export default {
   },
   created() {
     this.getList()
+    this.getImageOptions()
   },
   methods: {
     checkPermission,
@@ -266,6 +263,14 @@ export default {
         setTimeout(() => {
           this.listLoading = false
         }, 0.5 * 1000)
+      })
+    },
+    getImageOptions() {
+      listImage().then(response => {
+        this.imageOptions = []
+        response.result.forEach(element => {
+          this.imageOptions.push(element.repoTag)
+        })
       })
     },
     handleFilter() {
@@ -393,11 +398,25 @@ export default {
         row.status = 'Free'
       })
     },
-    handleFetchPv(pv) {
-      fetchPv(pv).then(response => {
-        this.pvData = response.data.pvData
+    handleFetchImageInfo(name) {
+      getImageByName(name).then(response => {
+        this.imageInfo = response.result
         this.dialogPvVisible = true
       })
+    },
+    nameVaildate(value) {
+      const arr = value.split('')
+      let firstLetterIndex = arr.length
+      for (let i = 0; i < arr.length; i++) {
+        if (arr[i] >= 'a' && arr[i] <= 'z') {
+          firstLetterIndex = i
+          break
+        }
+      }
+      value = value.substr(firstLetterIndex, arr.length)
+      value = value.replace(/[\u4e00-\u9fa5/\s+/]|[`~!@#$%^&*()_+=<>?:"{}|,./;'\\[\]·！￥……（）——《》？：“”【】、；‘’，。、]/g, '')
+        .replace(/\s/g, '')
+      return value
     },
     formatJson(filterVal) {
       return this.list.map(v => filterVal.map(j => {
@@ -450,7 +469,20 @@ export default {
         return requests / 4 + 'G'
       }
       return '-'
+    },
+    emptyFormatter(row, column) {
+      return row[column.property] || '-'
     }
   }
 }
 </script>
+
+<style scoped>
+#dataForm {
+ margin-left: 50px;
+ width: 460px;
+}
+.form-select {
+  width: 100%;
+}
+</style>
